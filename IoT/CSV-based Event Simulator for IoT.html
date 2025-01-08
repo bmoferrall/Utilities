@@ -1,0 +1,117 @@
+<html><head><title>CSV-based Event Simulator for IoT</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style type="text/css">TABLE { border-collapse: collapse; border-top: 1px; border-left: 1px; border-style: solid; margin: 4px; }TD, TH { border-bottom: 1px; border-right: 1px; border-style: solid; padding: 4px; }TH { background-color: #D8D8D8; }</style></head><body><div sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><h1 dir="ltr">Introduction</h1>
+
+<p dir="ltr">The python script described here will parse a CSV event 
+file with arbitrary fields and publish the events to Watson IoT using 
+either the mqtt or the http protocol.</p>
+
+<h1 dir="ltr">Details</h1>
+
+<p dir="ltr">The current version of the script can be downloaded <a href="https://w3-connections.ibm.com/wikis/form/api/wiki/1879f4b2-a135-4b6b-b50a-cff447409289/page/fa8b379f-a84a-40f0-8f1b-507d04228c97/attachment/437ccb8b-97de-48b4-a6be-f80e3aa0e3a3/media/publishCsvEventsToIot.py" lconnwikiparamwikiattachment="publishCsvEventsToIot.py" target="_blank">here</a>. The usage text is as follows</p>
+
+<p dir="ltr"><img id="1546948270372_0" src="CSV-based%20Event%20Simulator%20for%20IoT_files/editor_image_50368e42-e621-4577-87ff-e5fb88eccac7.png" width="598" height="109"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">The script reads application configuration information from an input file and uses this to connect to IoT using the <span style="color:#000080;">ibmiotf.application</span>
+ module. The script also reads simulator configuration information and 
+device configuration information (event id, device type and device id) 
+from the same input file. A sample configuration file looks as follows:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="font-size:14px;"><span style="color:#4b0082;">[simulator]</span></span></p>
+
+<p dir="ltr"><span style="color:#2f4f4f;"><span style="font-size:14px;">input-directory=input </span></span></p>
+
+<p dir="ltr"><span style="color:#2f4f4f;"><span style="font-size:14px;">output-directory=output</span></span></p>
+
+<p dir="ltr"><span style="color:#2f4f4f;"><span style="font-size:14px;">protocol=mqtt</span></span></p>
+
+<p dir="ltr"><span style="color:#2f4f4f;"><span style="font-size:14px;">wait-time-before-disconnect-secs=60</span></span></p>
+
+<p dir="ltr"><span style="color:#2f4f4f;"><span style="font-size:14px;">loglevel=INFO</span></span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="font-size:14px;"><span style="color:#4b0082;">[application]</span></span></p>
+
+<p dir="ltr"><span style="font-size:14px;"><span style="color:#2f4f4f;">org=9kpzic</span></span></p>
+
+<p dir="ltr"><span style="font-size:14px;"><span style="color:#2f4f4f;">auth-method=apikey</span></span></p>
+
+<p dir="ltr"><span style="font-size:14px;"><span style="color:#2f4f4f;">auth-key=a-9kpzic-wm30rkoo7f</span></span></p>
+
+<p dir="ltr"><span style="font-size:14px;"><span style="color:#2f4f4f;">auth-token=kjO758Pfu9Ixwno)XC</span></span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="font-size:14px;"><span style="color:#4b0082;">[device]</span></span></p>
+
+<p dir="ltr"><span style="font-size:14px;"><span style="color:#2f4f4f;">event=capAlert_V1</span></span></p>
+
+<p dir="ltr"><span style="font-size:14px;"><span style="color:#2f4f4f;">type=CapAlertSender_V1</span></span></p>
+
+<p dir="ltr"><span style="font-size:14px;"><span style="color:#2f4f4f;">id=capAlertSender_V1</span></span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">The CSV file starts with a header line, followed by one or 
+more records. The header can have any number of fields with any name. By
+ default the values are treated as strings when publishing to IoT. To 
+convert a field to an integer append ' i' to the header field. To 
+convert to a float append ' f' to the header field. Finally, to convert 
+to a date append ' d' to the header field. In this example the 
+'startdate' field is converted to a date field and the 'reading' field 
+is converted to a float:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#4b0082;"><span style="font-size:14px;">area,category,event,reading f,status,startdate d,location</span></span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">A sample CSV file is available <a href="https://w3-connections.ibm.com/wikis/form/api/wiki/1879f4b2-a135-4b6b-b50a-cff447409289/page/fa8b379f-a84a-40f0-8f1b-507d04228c97/attachment/800864c6-cb6c-4c38-98f7-b623f84ce201/media/capEvents.csv" lconnwikiparamwikiattachment="capEvents.csv" target="_blank">here</a>.</p>
+
+<p dir="ltr">The script will publish the events at the interval 
+specified by the -i argument, defaulting to 60 seconds. To test 
+performance the interval can be set to 0 (although a minimum value of 10
+ ms is currently enforced due to IoT's inability to handle a high rate).
+ A callback will print 'Event published successfully' if the event is 
+successfully published to IoT.</p>
+
+<p dir="ltr"><img id="1546946677936_0" src="CSV-based%20Event%20Simulator%20for%20IoT_files/editor_image_1a76d24c-46e6-448b-8682-a8a315812d51.png" width="986" height="409"></p>
+
+<p dir="ltr">Basic timing information is printed out once all the events
+ have been published. Accurate end-to-end timing would require 
+examination of persistence times in DB2, for example by adding a 
+generated time column to the relevant device type table.</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">Successfully published events should be visible in the recent events tab of the device in the Watson IoT dashboard:</p>
+
+<p dir="ltr"><img id="1544646786947_0" src="CSV-based%20Event%20Simulator%20for%20IoT_files/editor_image_a4f70079-e3c3-4d1d-81a7-012912ce835a.png" width="772" height="498"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">The raw events should also be visible in Cloudant storage:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><img id="1544646892625_0" src="CSV-based%20Event%20Simulator%20for%20IoT_files/editor_image_7e7402f2-0ff1-4a8d-88b1-8160af7f362e.png" width="782" height="321"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">If a Logical Interface has been defined the transformed 
+data is routed into a table (IOT_DEVICETYPENAME) automatically created 
+and maintained in DB2 Warehouse by the IoT platform. For example:</p>
+
+<p dir="ltr"><img lconnwikiparamattachmentname="SchemaCreatedInDB2.PNG" lconnwikimacro="image" lconnresourcetype="attachment" src="CSV-based%20Event%20Simulator%20for%20IoT_files/SchemaCreatedInDB2.PNG" alt="" lconnwikiparamwikipage="CSV-based Event Simulator for IoT" lconnattachedresourcetype="page" width="644" height="373"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><img lconnwikiparamattachmentname="DataInDB2.PNG" lconnwikimacro="image" lconnresourcetype="attachment" src="CSV-based%20Event%20Simulator%20for%20IoT_files/DataInDB2.PNG" alt="" lconnwikiparamwikipage="CSV-based Event Simulator for IoT" lconnattachedresourcetype="page" width="944" height="182"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">&nbsp;</p></div></body></html>

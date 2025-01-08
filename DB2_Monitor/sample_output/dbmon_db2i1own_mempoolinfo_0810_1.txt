@@ -1,0 +1,392 @@
+
+TOTAL_KB_COMMITTED  
+--------------------
+             4889472
+
+  1 record(s) selected.
+
+
+
+SET_TYPE             POOL_TYPE            DBNAME               KB_COMMITTED        
+-------------------- -------------------- -------------------- --------------------
+DATABASE             BP                   WIHDB                             3963072
+DATABASE             DATABASE             WIHDB                              121920
+DATABASE             DATABASE             IOCDB                              113408
+DATABASE             DATABASE             IOCDATA                            110656
+DATABASE             BP                   IOCDATA                             82304
+DATABASE             BP                   IOCDB                               58368
+DATABASE             LOCK_MGR             IOCDATA                             58048
+DATABASE             LOCK_MGR             WIHDB                               57216
+DATABASE             LOCK_MGR             IOCDB                               56128
+DBMS                 KERNEL               -                                   53504
+PRIVATE              PRIVATE              -                                   49280
+PRIVATE              PERSISTENT_PRIVATE   -                                   47872
+DATABASE             PACKAGE_CACHE        WIHDB                               18176
+APPLICATION          APPL_SHARED          WIHDB                               14016
+DBMS                 APM                  -                                    9728
+DBMS                 BSU                  -                                    9280
+DBMS                 EDU                  -                                    8064
+DBMS                 KERNEL_CONTROL       -                                    6400
+DATABASE             PACKAGE_CACHE        IOCDB                                6080
+PRIVATE              USER_DATA            -                                    5248
+APPLICATION          APPL_SHARED          IOCDB                                4480
+DBMS                 FCM_CONTROL          -                                    3200
+APPLICATION          APPLICATION          IOCDB                                3136
+DBMS                 FCM_SESSION          -                                    2944
+DBMS                 SQL_COMPILER         -                                    2752
+DATABASE             SHARED_SORT          WIHDB                                2560
+DBMS                 RESYNC               -                                    2496
+DATABASE             SHARED_SORT          IOCDB                                2304
+DBMS                 MONITOR              -                                    2240
+APPLICATION          APPLICATION          WIHDB                                2048
+FMP                  MISC                 -                                    2048
+DATABASE             CAT_CACHE            WIHDB                                1792
+DATABASE             PACKAGE_CACHE        IOCDATA                              1280
+DATABASE             SHARED_SORT          IOCDATA                              1280
+DATABASE             CAT_CACHE            IOCDB                                1216
+APPLICATION          APPLICATION          IOCDATA                              1152
+DBMS                 FCMBP                -                                     768
+APPLICATION          APPL_SHARED          IOCDATA                               512
+DBMS                 OSS_TRACKER          -                                     512
+DATABASE             CAT_CACHE            IOCDATA                               448
+DBMS                 FCM_CHANNEL          -                                     320
+DATABASE             UTILITY              IOCDB                                 256
+DATABASE             XMLCACHE             IOCDATA                               192
+DATABASE             XMLCACHE             IOCDB                                 192
+DATABASE             XMLCACHE             WIHDB                                 192
+PRIVATE              CLIENT_CONTEXT       -                                     192
+DATABASE             UTILITY              IOCDATA                                64
+DATABASE             UTILITY              WIHDB                                  64
+DBMS                 FEDERATED            -                                      64
+DBMS                 FCM_LOCAL            -                                       0
+
+  50 record(s) selected.
+
+
+
+SET_TYPE             POOL_TYPE            DBNAME               MEMORY_POOL_ID       APPLICATION_HANDLE   EDU_ID               KB_COMMITTED         KB_HWM              
+-------------------- -------------------- -------------------- -------------------- -------------------- -------------------- -------------------- --------------------
+DATABASE             BP                   WIHDB                                  16                    -                    -              3890432              3890432
+DATABASE             UTILITY              WIHDB                                   5                    -                    -                   64               212096
+DATABASE             PACKAGE_CACHE        WIHDB                                   7                    -                    -                18176               129728
+DATABASE             DATABASE             WIHDB                                   2                    -                    -               121920               121920
+DATABASE             DATABASE             IOCDB                                   2                    -                    -               113408               113408
+DATABASE             DATABASE             IOCDATA                                 2                    -                    -               110656               110656
+PRIVATE              PERSISTENT_PRIVATE   -                                      86                    -                    0                47872                75392
+DBMS                 KERNEL               -                                      52                    -                    -                53504                66432
+DATABASE             LOCK_MGR             IOCDATA                                 4                    -                    -                58048                58048
+DATABASE             LOCK_MGR             WIHDB                                   4                    -                    -                57216                57216
+DATABASE             LOCK_MGR             IOCDB                                   4                    -                    -                56128                56128
+DATABASE             BP                   IOCDB                                  16                    -                    -                33536                33536
+DATABASE             BP                   IOCDATA                                16                    -                    -                33472                33472
+DATABASE             BP                   IOCDATA                                16                    -                    -                33472                33472
+DATABASE             BP                   WIHDB                                  16                    -                    -                33280                33280
+DATABASE             BP                   WIHDB                                  16                    -                    -                33280                33280
+PRIVATE              USER_DATA            -                                      95                    -                    0                 5248                29376
+DATABASE             SHARED_SORT          WIHDB                                  18                    -                    -                 2560                20736
+APPLICATION          APPL_SHARED          WIHDB                                  20                    -                    -                14016                15936
+DBMS                 BSU                  -                                      71                    -                    -                 9280                15808
+PRIVATE              PRIVATE              -                                      88                    -                 2283                  256                12416
+DATABASE             PACKAGE_CACHE        IOCDB                                   7                    -                    -                 6080                12224
+DBMS                 APM                  -                                      70                    -                    -                 9728                 9728
+DATABASE             BP                   IOCDB                                  16                    -                    -                 9472                 9472
+DATABASE             BP                   IOCDB                                  16                    -                    -                 9280                 9280
+DATABASE             BP                   IOCDATA                                16                    -                    -                 9280                 9280
+DBMS                 EDU                  -                                      72                    -                    -                 8064                 8064
+DBMS                 KERNEL_CONTROL       -                                      69                    -                    -                 6400                 6400
+APPLICATION          APPL_SHARED          IOCDB                                  20                    -                    -                 4480                 5632
+DATABASE             SHARED_SORT          IOCDB                                  18                    -                    -                 2304                 4992
+PRIVATE              PRIVATE              -                                      88                    -                 1706                   64                 4224
+DBMS                 FCM_CONTROL          -                                      73                    -                    -                 3200                 3520
+DBMS                 MONITOR              -                                      11                    -                    -                 2240                 3200
+DBMS                 FCM_SESSION          -                                      77                    -                    -                 2944                 2944
+PRIVATE              PRIVATE              -                                      88                    -                 2702                  576                 2944
+DATABASE             UTILITY              IOCDB                                   5                    -                    -                  256                 2944
+DBMS                 SQL_COMPILER         -                                      50                    -                    -                 2752                 2752
+PRIVATE              PRIVATE              -                                      88                    -                 2266                  384                 2624
+DBMS                 RESYNC               -                                      62                    -                    -                 2496                 2496
+FMP                  MISC                 -                                      59                    -                    -                 2048                 2048
+DATABASE             CAT_CACHE            WIHDB                                   8                    -                    -                 1792                 2048
+DATABASE             SHARED_SORT          IOCDATA                                18                    -                    -                 1280                 1856
+DATABASE             BP                   IOCDB                                  16                    -                    -                 1792                 1792
+DATABASE             BP                   WIHDB                                  16                    -                    -                 1792                 1792
+DATABASE             BP                   IOCDATA                                16                    -                    -                 1792                 1792
+DATABASE             BP                   IOCDB                                  16                    -                    -                 1536                 1536
+DATABASE             BP                   WIHDB                                  16                    -                    -                 1536                 1536
+DATABASE             BP                   IOCDATA                                16                    -                    -                 1536                 1536
+PRIVATE              PRIVATE              -                                      88                    -                 2615                 1088                 1472
+PRIVATE              PRIVATE              -                                      88                    -                 2538                  896                 1472
+DATABASE             BP                   IOCDB                                  16                    -                    -                 1408                 1408
+DATABASE             BP                   WIHDB                                  16                    -                    -                 1408                 1408
+DATABASE             BP                   IOCDATA                                16                    -                    -                 1408                 1408
+DATABASE             BP                   IOCDB                                  16                    -                    -                 1344                 1344
+DATABASE             BP                   WIHDB                                  16                    -                    -                 1344                 1344
+DATABASE             BP                   IOCDATA                                16                    -                    -                 1344                 1344
+DATABASE             CAT_CACHE            IOCDB                                   8                    -                    -                 1216                 1280
+DATABASE             PACKAGE_CACHE        IOCDATA                                 7                    -                    -                 1280                 1280
+PRIVATE              PRIVATE              -                                      88                    -                 2518                  576                 1216
+PRIVATE              PRIVATE              -                                      88                    -                 2265                  768                 1216
+PRIVATE              PRIVATE              -                                      88                    -                 2278                  576                  896
+PRIVATE              PRIVATE              -                                      88                    -                 2554                  512                  896
+PRIVATE              PRIVATE              -                                      88                    -                 2280                  256                  832
+DBMS                 FCMBP                -                                      13                    -                    -                  768                  768
+PRIVATE              PRIVATE              -                                      88                    -                 2555                  320                  768
+PRIVATE              PRIVATE              -                                      88                    -                 2549                  576                  704
+PRIVATE              PRIVATE              -                                      88                    -                 2543                  576                  704
+PRIVATE              PRIVATE              -                                      88                    -                 2289                  384                  704
+PRIVATE              PRIVATE              -                                      88                    -                 1743                  320                  640
+PRIVATE              PRIVATE              -                                      88                    -                 2606                  512                  640
+PRIVATE              PRIVATE              -                                      88                    -                 2786                  256                  576
+PRIVATE              PRIVATE              -                                      88                    -                 2745                  320                  576
+PRIVATE              PRIVATE              -                                      88                    -                 2738                  576                  576
+PRIVATE              PRIVATE              -                                      88                    -                 2622                  384                  576
+PRIVATE              PRIVATE              -                                      88                    -                 2609                  384                  576
+PRIVATE              PRIVATE              -                                      88                    -                 2582                  576                  576
+PRIVATE              PRIVATE              -                                      88                    -                 2550                  576                  576
+PRIVATE              PRIVATE              -                                      88                    -                 2536                  512                  576
+PRIVATE              PRIVATE              -                                      88                    -                 2525                  384                  576
+PRIVATE              PRIVATE              -                                      88                    -                 2273                  384                  576
+DBMS                 OSS_TRACKER          -                                      57                    -                    -                  512                  512
+PRIVATE              PRIVATE              -                                      88                    -                 2822                  512                  512
+PRIVATE              PRIVATE              -                                      88                    -                 2754                  384                  512
+PRIVATE              PRIVATE              -                                      88                    -                 2744                  384                  512
+PRIVATE              PRIVATE              -                                      88                    -                 2737                  512                  512
+PRIVATE              PRIVATE              -                                      88                    -                 2610                  448                  512
+PRIVATE              PRIVATE              -                                      88                    -                 2620                  512                  512
+PRIVATE              PRIVATE              -                                      88                    -                 1742                  512                  512
+PRIVATE              PRIVATE              -                                      88                    -                 2540                  512                  512
+PRIVATE              PRIVATE              -                                      88                    -                 2261                  512                  512
+PRIVATE              PRIVATE              -                                      88                    -                 2260                  512                  512
+PRIVATE              PRIVATE              -                                      88                    -                 2222                  384                  512
+APPLICATION          APPL_SHARED          IOCDATA                                20                    -                    -                  512                  512
+PRIVATE              PRIVATE              -                                      88                    -                 2753                  448                  448
+PRIVATE              PRIVATE              -                                      88                    -                 2828                  448                  448
+PRIVATE              PRIVATE              -                                      88                    -                 2823                  448                  448
+PRIVATE              PRIVATE              -                                      88                    -                 2820                  448                  448
+PRIVATE              PRIVATE              -                                      88                    -                 2817                  448                  448
+PRIVATE              PRIVATE              -                                      88                    -                 2816                  448                  448
+PRIVATE              PRIVATE              -                                      88                    -                 2815                  448                  448
+PRIVATE              PRIVATE              -                                      88                    -                 2813                  448                  448
+PRIVATE              PRIVATE              -                                      88                    -                 2531                  448                  448
+PRIVATE              PRIVATE              -                                      88                    -                 2751                  448                  448
+PRIVATE              PRIVATE              -                                      88                    -                 2748                  448                  448
+PRIVATE              PRIVATE              -                                      88                    -                 2746                  256                  448
+PRIVATE              PRIVATE              -                                      88                    -                 2742                  320                  448
+PRIVATE              PRIVATE              -                                      88                    -                 2736                  448                  448
+PRIVATE              PRIVATE              -                                      88                    -                 2593                  192                  448
+PRIVATE              PRIVATE              -                                      88                    -                 2264                  192                  448
+PRIVATE              PRIVATE              -                                      88                    -                 2600                  256                  448
+DATABASE             CAT_CACHE            IOCDATA                                 8                    -                    -                  448                  448
+PRIVATE              PRIVATE              -                                      88                    -                 2827                  384                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2825                  384                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2826                  384                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2821                  192                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2824                  384                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2819                  384                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2818                  192                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2814                  384                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2788                  384                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2787                  384                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2784                  384                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2781                  192                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2782                  192                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2783                  192                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2780                  384                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2607                  384                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2700                  384                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2755                  256                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2741                  192                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2739                  192                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2735                  192                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2708                  192                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2704                  384                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2552                  384                  384
+PRIVATE              PRIVATE              -                                      88                    -                 2541                  384                  384
+PRIVATE              PRIVATE              -                                      88                    -                 1704                  384                  384
+DBMS                 FCM_CHANNEL          -                                      79                    -                    -                  320                  320
+PRIVATE              PRIVATE              -                                      88                    -                 2812                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2811                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2810                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2809                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2808                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2807                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2806                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2805                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2804                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2803                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2802                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2801                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2248                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2247                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2246                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2245                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2244                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2243                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2242                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2241                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2240                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2239                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2238                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2237                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 1728                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 1727                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 1726                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 1725                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 1724                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 1723                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 1722                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 1721                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 1720                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 1719                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 1718                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 1717                  256                  256
+PRIVATE              PRIVATE              -                                      88                    -                 2259                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 2258                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 2257                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 2256                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 2255                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 2254                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 2253                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 2252                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 2251                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 2250                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 2249                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 2224                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 2223                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 1741                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 1740                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 1739                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 1738                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 1737                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 1736                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 1735                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 1734                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 1733                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 1732                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 1731                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 1730                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 1729                  192                  192
+DATABASE             XMLCACHE             IOCDB                                  93                    -                    -                  192                  192
+APPLICATION          APPLICATION          IOCDB                                   1                 1013                    -                  192                  192
+DATABASE             XMLCACHE             WIHDB                                  93                    -                    -                  192                  192
+APPLICATION          APPLICATION          WIHDB                                   1                  703                    -                  192                  192
+DATABASE             XMLCACHE             IOCDATA                                93                    -                    -                  192                  192
+APPLICATION          APPLICATION          IOCDATA                                 1                47778                    -                  192                  192
+PRIVATE              PRIVATE              -                                      88                    -                 2597                  128                  128
+APPLICATION          APPLICATION          IOCDB                                   1                48207                    -                  128                  128
+APPLICATION          APPLICATION          IOCDB                                   1                48100                    -                  128                  128
+APPLICATION          APPLICATION          IOCDB                                   1                48072                    -                  128                  128
+APPLICATION          APPLICATION          IOCDB                                   1                48085                    -                  128                  128
+APPLICATION          APPLICATION          IOCDB                                   1                48004                    -                  128                  128
+APPLICATION          APPLICATION          IOCDB                                   1                47998                    -                  128                  128
+APPLICATION          APPLICATION          IOCDB                                   1                47944                    -                  128                  128
+APPLICATION          APPLICATION          IOCDB                                   1                47896                    -                  128                  128
+APPLICATION          APPLICATION          IOCDB                                   1                47227                    -                  128                  128
+APPLICATION          APPLICATION          IOCDB                                   1                47754                    -                  128                  128
+APPLICATION          APPLICATION          IOCDB                                   1                47436                    -                  128                  128
+APPLICATION          APPLICATION          IOCDB                                   1                47014                    -                  128                  128
+APPLICATION          APPLICATION          IOCDB                                   1                44510                    -                  128                  128
+APPLICATION          APPLICATION          IOCDB                                   1                44540                    -                  128                  128
+APPLICATION          APPLICATION          IOCDB                                   1                41311                    -                  128                  128
+APPLICATION          APPLICATION          IOCDB                                   1                39781                    -                  128                  128
+APPLICATION          APPLICATION          IOCDB                                   1                 1010                    -                  128                  128
+APPLICATION          APPLICATION          WIHDB                                   1                48253                    -                  128                  128
+APPLICATION          APPLICATION          WIHDB                                   1                47804                    -                  128                  128
+APPLICATION          APPLICATION          WIHDB                                   1                42854                    -                  128                  128
+APPLICATION          APPLICATION          WIHDB                                   1                44709                    -                  128                  128
+APPLICATION          APPLICATION          WIHDB                                   1                44702                    -                  128                  128
+APPLICATION          APPLICATION          WIHDB                                   1                19447                    -                  128                  128
+APPLICATION          APPLICATION          WIHDB                                   1                 4259                    -                  128                  128
+APPLICATION          APPLICATION          WIHDB                                   1                54714                    -                  128                  128
+APPLICATION          APPLICATION          IOCDATA                                 1                47783                    -                  128                  128
+DBMS                 FEDERATED            -                                      83                    -                    -                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 2800                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 2799                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 2798                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 2797                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 2796                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 2795                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 2794                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 2793                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 2790                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 2789                   64                   64
+PRIVATE              CLIENT_CONTEXT       -                                      90                    -                 2615                   64                   64
+PRIVATE              CLIENT_CONTEXT       -                                      90                    -                 2543                   64                   64
+PRIVATE              CLIENT_CONTEXT       -                                      90                    -                 2538                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 2236                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 2235                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 2234                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 2233                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 2232                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 2231                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 2230                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 2229                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 2226                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 2225                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 1716                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 1715                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 1714                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 1713                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 1712                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 1711                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 1710                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 1709                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                 1705                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                   21                    0                   64
+PRIVATE              PRIVATE              -                                      88                    -                   16                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                   13                   64                   64
+PRIVATE              PRIVATE              -                                      88                    -                    0                   64                   64
+APPLICATION          APPLICATION          IOCDB                                   1                 1023                    -                   64                   64
+APPLICATION          APPLICATION          IOCDB                                   1                 1022                    -                   64                   64
+APPLICATION          APPLICATION          IOCDB                                   1                 1021                    -                   64                   64
+APPLICATION          APPLICATION          IOCDB                                   1                 1020                    -                   64                   64
+APPLICATION          APPLICATION          IOCDB                                   1                 1019                    -                   64                   64
+APPLICATION          APPLICATION          IOCDB                                   1                 1018                    -                   64                   64
+APPLICATION          APPLICATION          IOCDB                                   1                 1017                    -                   64                   64
+APPLICATION          APPLICATION          IOCDB                                   1                 1016                    -                   64                   64
+APPLICATION          APPLICATION          IOCDB                                   1                 1015                    -                   64                   64
+APPLICATION          APPLICATION          IOCDB                                   1                 1014                    -                   64                   64
+APPLICATION          APPLICATION          IOCDB                                   1                 1012                    -                   64                   64
+APPLICATION          APPLICATION          IOCDB                                   1                 1011                    -                   64                   64
+APPLICATION          APPLICATION          WIHDB                                   1                  713                    -                   64                   64
+APPLICATION          APPLICATION          WIHDB                                   1                  712                    -                   64                   64
+APPLICATION          APPLICATION          WIHDB                                   1                  711                    -                   64                   64
+APPLICATION          APPLICATION          WIHDB                                   1                  710                    -                   64                   64
+APPLICATION          APPLICATION          WIHDB                                   1                  709                    -                   64                   64
+APPLICATION          APPLICATION          WIHDB                                   1                  708                    -                   64                   64
+APPLICATION          APPLICATION          WIHDB                                   1                  707                    -                   64                   64
+APPLICATION          APPLICATION          WIHDB                                   1                  706                    -                   64                   64
+APPLICATION          APPLICATION          WIHDB                                   1                  705                    -                   64                   64
+APPLICATION          APPLICATION          WIHDB                                   1                  704                    -                   64                   64
+APPLICATION          APPLICATION          WIHDB                                   1                  702                    -                   64                   64
+APPLICATION          APPLICATION          WIHDB                                   1                  701                    -                   64                   64
+APPLICATION          APPLICATION          WIHDB                                   1                  700                    -                   64                   64
+DATABASE             UTILITY              IOCDATA                                 5                    -                    -                   64                   64
+APPLICATION          APPLICATION          IOCDATA                                 1                47779                    -                   64                   64
+APPLICATION          APPLICATION          IOCDATA                                 1                47812                    -                   64                   64
+APPLICATION          APPLICATION          IOCDATA                                 1                47775                    -                   64                   64
+APPLICATION          APPLICATION          IOCDATA                                 1                47795                    -                   64                   64
+APPLICATION          APPLICATION          IOCDATA                                 1                47784                    -                   64                   64
+APPLICATION          APPLICATION          IOCDATA                                 1                47780                    -                   64                   64
+APPLICATION          APPLICATION          IOCDATA                                 1                47770                    -                   64                   64
+APPLICATION          APPLICATION          IOCDATA                                 1                47744                    -                   64                   64
+APPLICATION          APPLICATION          IOCDATA                                 1                47763                    -                   64                   64
+APPLICATION          APPLICATION          IOCDATA                                 1                47788                    -                   64                   64
+APPLICATION          APPLICATION          IOCDATA                                 1                47767                    -                   64                   64
+APPLICATION          APPLICATION          IOCDATA                                 1                47813                    -                   64                   64
+APPLICATION          APPLICATION          IOCDATA                                 1                47733                    -                   64                   64
+DBMS                 FCM_LOCAL            -                                      74                    -                    -                    0                    0
+PRIVATE              PRIVATE              -                                      88                    -                 2749                    0                    0
+PRIVATE              PRIVATE              -                                      88                    -                 2792                    0                    0
+PRIVATE              PRIVATE              -                                      88                    -                 2791                    0                    0
+PRIVATE              CLIENT_CONTEXT       -                                      90                    -                 2615                    0                    0
+PRIVATE              CLIENT_CONTEXT       -                                      90                    -                 2538                    0                    0
+PRIVATE              PRIVATE              -                                      88                    -                 2228                    0                    0
+PRIVATE              PRIVATE              -                                      88                    -                 2227                    0                    0
+PRIVATE              PRIVATE              -                                      88                    -                 1708                    0                    0
+PRIVATE              PRIVATE              -                                      88                    -                 1707                    0                    0
+PRIVATE              PRIVATE              -                                      88                    -                   20                    0                    0
+
+  320 record(s) selected.
+
+

@@ -1,0 +1,26 @@
+
+Database Member 0 -- Active -- Up 1 days 13:16:23 -- Date 2018-08-10-11.54.51.055674
+
+Database Member Memory Controller Statistics
+
+Controller Automatic: Y
+Memory Limit:         59473784 KB
+Current usage:        6835840 KB
+HWM usage:            11202240 KB
+Cached memory:        829312 KB
+
+Individual Memory Consumers:
+
+Name             Mem Used (KB) HWM Used (KB) Cached (KB)
+========================================================
+APPL-IOCDATA            160000        160000      158080
+APPL-IOCDB               20992        160000       12160
+APPL-WIHDB               53120        160000       35520
+DBMS-db2i1own           144384        144384       12928
+FMP_RESOURCES            22528         22528           0
+PRIVATE                 153344        190784           0
+DB-WIHDB               5538752       5538752      536256
+DB-IOCDB                365184        365184       36608
+DB-IOCDATA              377280        377280       37760
+LCL-p8288                  128           128           0
+LCL-p8168                  128           128           0

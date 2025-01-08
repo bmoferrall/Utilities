@@ -1,0 +1,5 @@
+Linux 2.6.32-754.el6.x86_64 (dubperftest06c.mul.ie.ibm.com) 	08/10/2018 	_x86_64_	(8 CPU)
+
+11:53:39 AM  CPU    %usr   %nice    %sys %iowait    %irq   %soft  %steal  %guest   %idle
+11:54:39 AM  all    0.95    0.00    2.31    2.61    0.00    0.26    0.00    0.00   93.87
+Average:     all    0.95    0.00    2.31    2.61    0.00    0.26    0.00    0.00   93.87

@@ -1,0 +1,11 @@
+Fri Aug 10 11:54:50 IST 2018
+
+DB_NAME    NAGENTS     NSUBAGENTS          
+---------- ----------- --------------------
+IOCDATA             15                   15
+IOCDB               30                   30
+WIHDB               22                   22
+
+  3 record(s) selected.
+
+

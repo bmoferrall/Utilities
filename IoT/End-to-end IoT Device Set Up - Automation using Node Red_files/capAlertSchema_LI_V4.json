@@ -1,0 +1,211 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type" : "object",
+    "title" : "capAlertLogicalInterfaceSchema_V4",
+    "description" : "JSON Schema that defines the CAP alert logical interface structure V4",
+    "properties" : {
+         "area" : {
+             "description" : "Name of Area associated with Alert",
+             "type" : "string",
+             "default": ""
+         },
+         "areaDes" : {
+             "description" : "Alert area description",
+             "type" : "string",
+             "default": ""
+         },
+         "event" : {
+             "description" : "Description of Alert",
+             "type" : "string",
+             "default": ""
+         },
+         "location" : {
+             "description" : "Alert location",
+             "type" : "string",
+             "default": ""
+         },
+         "headline" : {
+             "description" : "Alert headline",
+             "type" : "string",
+             "default": ""
+         },
+         "addresses" : {
+             "description" : "Alert address(es)",
+             "type" : "string",
+             "default": ""
+         },
+         "severity" : {
+             "description" : "Severity of Alert (Extreme, Severe, Moderate, Minor, Unknown)",
+             "type" : "string",
+             "default" : "Unknown"
+         },
+         "sender" : {
+             "description" : "Name of the Sender of the Alert",
+             "type" : "string",
+             "default": ""
+         },
+         "startdate" : {
+             "description" : "Time of Alert",
+             "type" : "string",
+             "format":"date-time",
+             "default": ""
+         },
+         "enddate" : {
+             "description" : "Alert end time",
+             "type" : "string",
+             "format":"date-time",
+             "default": ""
+         },
+         "lastupdate" : {
+             "description" : "Last update time of Alert ",
+             "type" : "string",
+             "format":"date-time",
+             "default": ""
+         },
+         "onset" : {
+             "description" : "Onset of alert",
+             "type" : "string",
+             "format":"date-time",
+             "default": ""
+         },
+         "expires" : {
+             "description" : "Expiration of Alert",
+             "type" : "string",
+             "format":"date-time",
+             "default": ""
+         },
+         "msgType" : {
+             "description" : "Alert type (Alert, Update, Cancel, Ack, Error)",
+             "type" : "string",
+             "default" : "Alert"
+         },
+         "urgency" : {
+             "description" : "Alert urgency (Immediate, Expected, Future, Past, Unknown)",
+             "type" : "string",
+             "default" : "Unknown"
+         },
+         "category" : {
+             "description" : "Alert Category (Geo, Met, Safety, Security, Rescue, Fire, Health, Env, Transport, Infra, Other)",
+             "type" : "string",
+             "default" : "Other"
+         },
+         "certainty" : {
+             "description" : "Alert Certainty (Observed, Likely, Possible, Unlikely, Unknown)",
+             "type" : "string",
+             "default" : "Unknown"
+         },
+         "code" : {
+             "description" : "Alert code",
+             "type" : "string",
+             "default": ""
+         },
+         "contact" : {
+             "description" : "Alert contact",
+             "type" : "string",
+             "default": ""
+         },
+         "description" : {
+             "description" : "Alert description",
+             "type" : "string",
+             "default": ""
+         },
+         "effective" : {
+             "description" : "Effective date of Alert",
+             "type" : "string",
+             "format":"date-time",
+             "default": ""
+         },
+         "eventCode" : {
+             "description" : "Alert event code",
+             "type" : "string",
+             "default": ""
+         },
+         "geocode" : {
+             "description" : "Alert geocode",
+             "type" : "string",
+             "default": ""
+         },
+         "identifier" : {
+             "description" : "Alert identifier",
+             "type" : "string",
+             "default": ""
+         },
+         "incidents" : {
+             "description" : "Alert incidents",
+             "type" : "string",
+             "default": ""
+         },
+         "instruction" : {
+             "description" : "Alert instruction",
+             "type" : "string",
+             "default": ""
+         },
+         "note" : {
+             "description" : "Alert note",
+             "type" : "string",
+             "default": ""
+         },
+         "parameters" : {
+             "description" : "Alert parameters",
+             "type" : "string",
+             "default": ""
+         },
+         "references" : {
+             "description" : "Alert references",
+             "type" : "string",
+             "default": ""
+         },
+         "resource" : {
+             "description" : "Alert resource",
+             "type" : "string",
+             "default": ""
+         },
+         "restriction" : {
+             "description" : "Alert restriction",
+             "type" : "string",
+             "default": ""
+         },
+         "scope" : {
+             "description" : "Alert scope",
+             "type" : "string",
+             "default": ""
+         },
+         "senderName" : {
+             "description" : "Alert sender's name",
+             "type" : "string",
+             "default": ""
+         },
+         "sent" : {
+             "description" : "Alert sent date",
+             "type" : "string",
+             "format":"date-time",
+             "default": ""
+         },
+         "source" : {
+             "description" : "Alert source",
+             "type" : "string",
+             "default": ""
+         },
+         "web" : {
+             "description" : "Alert web reference",
+             "type" : "string",
+             "default": ""
+         },
+         "status" : {
+             "description" : "Status of the Alert",
+             "type" : "string",
+             "default": ""
+         }
+    },
+    "required" : [
+        "event",
+        "certainty",
+        "msgType",
+        "severity",
+        "sender",
+        "urgency",
+        "category",
+        "location",
+        "references"
+    ]
+}

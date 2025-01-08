@@ -1,0 +1,1897 @@
+
+       Database Configuration for Database 
+
+ Database configuration release level                    = 0x1000
+ Database release level                                  = 0x1000
+
+ Database territory                                      = US
+ Database code page                                      = 1208
+ Database code set                                       = UTF-8
+ Database country/region code                            = 1
+ Database collating sequence                             = IDENTITY
+ Alternate collating sequence              (ALT_COLLATE) = 
+ Number compatibility                                    = OFF
+ Varchar2 compatibility                                  = OFF
+ Date compatibility                                      = OFF
+ Database page size                                      = 8192
+
+ Statement concentrator                      (STMT_CONC) = LITERALS
+
+ Discovery support for this database       (DISCOVER_DB) = ENABLE
+
+ Restrict access                                         = NO
+ Default query optimization class         (DFT_QUERYOPT) = 5
+ Degree of parallelism                      (DFT_DEGREE) = 1
+ Continue upon arithmetic exceptions   (DFT_SQLMATHWARN) = NO
+ Default refresh age                   (DFT_REFRESH_AGE) = 0
+ Default maintained table types for opt (DFT_MTTB_TYPES) = SYSTEM
+ Number of frequent values retained     (NUM_FREQVALUES) = 10
+ Number of quantiles retained            (NUM_QUANTILES) = 20
+
+ Decimal floating point rounding mode  (DECFLT_ROUNDING) = ROUND_HALF_EVEN
+
+ Backup pending                                          = NO
+
+ All committed transactions have been written to disk    = NO
+ Rollforward pending                                     = NO
+ Restore pending                                         = NO
+
+ Multi-page file allocation enabled                      = YES
+
+ Log retain for recovery status                          = NO
+ User exit for logging status                            = NO
+
+ Self tuning memory                    (SELF_TUNING_MEM) = ON
+ Size of database shared memory (4KB)  (DATABASE_MEMORY) = AUTOMATIC(1343911)
+ Database memory threshold               (DB_MEM_THRESH) = 100
+ Max storage for lock list (4KB)              (LOCKLIST) = AUTOMATIC(13984)
+ Percent. of lock lists per application       (MAXLOCKS) = AUTOMATIC(98)
+ Package cache size (4KB)                   (PCKCACHESZ) = AUTOMATIC(34353)
+ Sort heap thres for shared sorts (4KB) (SHEAPTHRES_SHR) = AUTOMATIC(73890)
+ Sort list heap (4KB)                         (SORTHEAP) = AUTOMATIC(7389)
+
+ Database heap (4KB)                            (DBHEAP) = AUTOMATIC(5287)
+ Catalog cache size (4KB)              (CATALOGCACHE_SZ) = 300
+ Log buffer size (4KB)                        (LOGBUFSZ) = 2150
+ Utilities heap size (4KB)                (UTIL_HEAP_SZ) = AUTOMATIC(94248)
+ SQL statement heap (4KB)                     (STMTHEAP) = AUTOMATIC(8192)
+ Default application heap (4KB)             (APPLHEAPSZ) = AUTOMATIC(2048)
+ Application Memory Size (4KB)             (APPL_MEMORY) = AUTOMATIC(40000)
+ Statistics heap size (4KB)               (STAT_HEAP_SZ) = AUTOMATIC(4384)
+
+ Interval for checking deadlock (ms)         (DLCHKTIME) = 10000
+ Lock timeout (sec)                        (LOCKTIMEOUT) = -1
+
+ Changed pages threshold                (CHNGPGS_THRESH) = 80
+ Number of asynchronous page cleaners   (NUM_IOCLEANERS) = AUTOMATIC(8)
+ Number of I/O servers                   (NUM_IOSERVERS) = AUTOMATIC(12)
+ Sequential detect flag                      (SEQDETECT) = YES
+ Default prefetch size (pages)         (DFT_PREFETCH_SZ) = AUTOMATIC
+
+ Track modified pages                         (TRACKMOD) = NO
+
+ Default number of containers                            = 1
+ Default tablespace extentsize (pages)   (DFT_EXTENT_SZ) = 32
+
+ Max number of active applications            (MAXAPPLS) = AUTOMATIC(60)
+ Average number of active applications       (AVG_APPLS) = AUTOMATIC(1)
+ Max DB files open per application            (MAXFILOP) = 61440
+
+ Log file size (4KB)                         (LOGFILSIZ) = 10240
+ Number of primary log files                (LOGPRIMARY) = 10
+ Number of secondary log files               (LOGSECOND) = 50
+ Changed path to log files                  (NEWLOGPATH) = 
+ Path to log files                                       = /db2logs/wihdb/db2i1own/NODE0000/SQL00001/LOGSTREAM0000/
+ Overflow log path                     (OVERFLOWLOGPATH) = 
+ Mirror log path                         (MIRRORLOGPATH) = 
+ First active log file                                   = 
+ Block log on disk full                (BLK_LOG_DSK_FUL) = NO
+ Block non logged operations            (BLOCKNONLOGGED) = NO
+ Percent max primary log space by transaction  (MAX_LOG) = 0
+ Num. of active log files for 1 active UOW(NUM_LOG_SPAN) = 0
+
+ Percent log file reclaimed before soft chckpt (SOFTMAX) = 0
+ Target for oldest page in LBP       (PAGE_AGE_TRGT_MCR) = 240
+
+ HADR database role                                      = STANDARD
+ HADR local host name                  (HADR_LOCAL_HOST) = 
+ HADR local service name                (HADR_LOCAL_SVC) = 
+ HADR remote host name                (HADR_REMOTE_HOST) = 
+ HADR remote service name              (HADR_REMOTE_SVC) = 
+ HADR instance name of remote server  (HADR_REMOTE_INST) = 
+ HADR timeout value                       (HADR_TIMEOUT) = 120
+ HADR target list                     (HADR_TARGET_LIST) = 
+ HADR log write synchronization mode     (HADR_SYNCMODE) = NEARSYNC
+ HADR spool log data limit (4KB)      (HADR_SPOOL_LIMIT) = AUTOMATIC(0)
+ HADR log replay delay (seconds)     (HADR_REPLAY_DELAY) = 0
+ HADR peer window duration (seconds)  (HADR_PEER_WINDOW) = 0
+
+ First log archive method                 (LOGARCHMETH1) = OFF
+ Archive compression for logarchmeth1    (LOGARCHCOMPR1) = OFF
+ Options for logarchmeth1                  (LOGARCHOPT1) = 
+ Second log archive method                (LOGARCHMETH2) = OFF
+ Archive compression for logarchmeth2    (LOGARCHCOMPR2) = OFF
+ Options for logarchmeth2                  (LOGARCHOPT2) = 
+ Failover log archive path                (FAILARCHPATH) = 
+ Number of log archive retries on error   (NUMARCHRETRY) = 5
+ Log archive retry Delay (secs)         (ARCHRETRYDELAY) = 20
+ Vendor options                              (VENDOROPT) = 
+
+ Auto restart enabled                      (AUTORESTART) = ON
+ Index re-creation time and redo index build  (INDEXREC) = SYSTEM (RESTART)
+ Log pages during index build            (LOGINDEXBUILD) = OFF
+ Default number of loadrec sessions    (DFT_LOADREC_SES) = 1
+ Number of database backups to retain   (NUM_DB_BACKUPS) = 12
+ Recovery history retention (days)     (REC_HIS_RETENTN) = 366
+ Auto deletion of recovery objects    (AUTO_DEL_REC_OBJ) = OFF
+
+ TSM management class                    (TSM_MGMTCLASS) = 
+ TSM node name                            (TSM_NODENAME) = 
+ TSM owner                                   (TSM_OWNER) = 
+ TSM password                             (TSM_PASSWORD) = 
+
+ Automatic maintenance                      (AUTO_MAINT) = ON
+   Automatic database backup            (AUTO_DB_BACKUP) = OFF
+   Automatic table maintenance          (AUTO_TBL_MAINT) = ON
+     Automatic runstats                  (AUTO_RUNSTATS) = ON
+       Real-time statistics            (AUTO_STMT_STATS) = ON
+       Statistical views              (AUTO_STATS_VIEWS) = OFF
+       Automatic sampling                (AUTO_SAMPLING) = OFF
+     Automatic reorganization               (AUTO_REORG) = ON
+
+ Auto-Revalidation                          (AUTO_REVAL) = DEFERRED
+
+ Currently Committed                        (CUR_COMMIT) = ON
+ CHAR output with DECIMAL input        (DEC_TO_CHAR_FMT) = NEW
+ Enable XML Character operations        (ENABLE_XMLCHAR) = YES
+ WLM Collection Interval (minutes)     (WLM_COLLECT_INT) = 0
+ Monitor Collect Settings
+ Request metrics                       (MON_REQ_METRICS) = BASE
+ Activity metrics                      (MON_ACT_METRICS) = BASE
+ Object metrics                        (MON_OBJ_METRICS) = EXTENDED
+ Routine data                             (MON_RTN_DATA) = NONE
+   Routine executable list            (MON_RTN_EXECLIST) = OFF
+ Unit of work events                      (MON_UOW_DATA) = NONE
+   UOW events with package list        (MON_UOW_PKGLIST) = OFF
+   UOW events with executable list    (MON_UOW_EXECLIST) = OFF
+ Lock timeout events                   (MON_LOCKTIMEOUT) = NONE
+ Deadlock events                          (MON_DEADLOCK) = WITHOUT_HIST
+ Lock wait events                         (MON_LOCKWAIT) = NONE
+ Lock wait event threshold               (MON_LW_THRESH) = 5000000
+ Number of package list entries         (MON_PKGLIST_SZ) = 32
+ Lock event notification level         (MON_LCK_MSG_LVL) = 1
+
+ SMTP Server                               (SMTP_SERVER) = 
+ SQL conditional compilation flags         (SQL_CCFLAGS) = 
+ Section actuals setting               (SECTION_ACTUALS) = NONE
+ Connect procedure                        (CONNECT_PROC) = 
+ Adjust temporal SYSTEM_TIME period (SYSTIME_PERIOD_ADJ) = NO
+ Log DDL Statements                      (LOG_DDL_STMTS) = NO
+ Log Application Information             (LOG_APPL_INFO) = NO
+ Default data capture on new Schemas   (DFT_SCHEMAS_DCC) = NO
+ Default table organization              (DFT_TABLE_ORG) = ROW
+ Default string units                     (STRING_UNITS) = SYSTEM
+ National character string mapping       (NCHAR_MAPPING) = GRAPHIC_CU16
+ Database is in write suspend state                      = NO
+ Extended row size support             (EXTENDED_ROW_SZ) = ENABLE
+ Encryption Library for Backup                 (ENCRLIB) = libdb2encr.so
+ Encryption Options for Backup                (ENCROPTS) = CIPHER=AES:MODE=CBC:KEY LENGTH=256
+ Encrypted database                                      = YES
+ Procedural language stack trace        (PL_STACK_TRACE) = NONE
+
+**********************************************************************
+******** DUBPERF DB SNAPSHOT PERFORMANCE REPORT **********************
+**********************************************************************
+  TOOLS DATE        : 23-JULY-2013, DUBLIN PERFORMANCE TEAM
+  Capture START Time: 2018-08-10-11.53.47.016740 
+  Capture END   Time  : 2018-08-10-11.54.47.241996 
+  DURATION:    0 Days,   0 Hours,   1 Mins,   0 Secs,     225256 USecs 
+  TOTAL DURATION SECS    :                   60 
+  
+  DBNAME                 : WIHDB                                                                    
+  DB_PATH                : /db2logs/wihdb/db2i1own/NODE0000/SQL00001/MEMBER0000/                    
+  INPUT_DB_ALIAS         : WIHDB                                                                    
+  CATALOGPARTITION       : 0      
+  CATALOG_PARTITION_NAME : dubperftest06c.mul.ie.ibm.com                                            
+  SERVER PLATFORM        : LINUXX8664      
+  DB_LOCATION            : LOCAL        
+  DB_STATUS              : ACTIVE           
+  ******************************************************************* 
+  CONNECTION DATA            : TOTAL RUN DATA  *   PER SECOND DATA   
+  ******************************************************************* 
+  * NBR of connects   @START :               8 *  
+  * NBR of connects   @END   :               8 *  
+  * TOP connects NBR  @START :              67 *  
+  * TOP connects NBR  @END   :              67 *  
+  * DB APPS executing @START :               1 *  
+  * DB APPS executing @END   :               1 *  
+  * Nbr DB subagents   @START:              22 *  
+  * Nbr DB subagents   @END  :              22 *  
+  * TOP nbr DB agents  @START:              67 *  
+  * TOP nbr DB agents  @END  :              67 *  
+  * TOP nbr subagents  @START:              67 *  
+  * TOP nbr subagents  @END  :              67 *  
+   * New Connections          :              53 *                 .88 
+   * Secondary/Agent connects :               0 *                 .00 
+   ******************************************************************* 
+   STATEMENTS                 : TOTAL RUN DATA  *   PER SECOND DATA   
+   ******************************************************************* 
+   * Commits                  :             166 *                2.76 
+   * Rollback                 :               0 *                 .00 
+   * Select                   :             158 *                2.63 
+   * Update/Insert/Delete     :               5 *                 .08 
+   * DDL                      :               1 *                 .01 
+   * Failed SQL               :               0 *                 .00 
+   * Dynamic SQL (Fetch.Open, :             164 *                2.73 
+   *  Prepare,Close,Describe) :                 *                 * 
+   * Static SQL               :             165              2.75 
+   * BINDS_PRECOMPILES        :               0 *                 .00 
+   * INT_AUTO_REBINDS         :               0 *                 .00 
+   * INT_COMMITS              :              53 *                 .88 
+   * INT_DEADLOCK_ROLLBACKS   :               0 *                 .00 
+   * INT_ROLLBACKS            :              53 *                 .88 
+   * INT_ROWS_DELETED         :               0 *                 .00 
+   * INT_ROWS_INSERTED        :               0 *                 .00 
+   * INT_ROWS_UPDATED         :               0 *                 .00 
+   ******************************************************************* 
+   ROW ACCESS 
+   ******************************************************************* 
+   * ROWS_READ                :            2865 *               47.75 
+   * ROWS_SELECTED            :             105 *                1.75 
+   * ROWS READ/SELECTED RATIO :           27.02 *                    
+   * PREFETCH_WAIT_TIME msecs :               0 *                    
+   * ROWS_DELETED             :               0 *                 .00 
+   * ROWS_INSERTED            :            2024 *               33.73 
+   * ROWS_UPDATED             :               0 *                 .00 
+   * BINDS_PRECOMPILES        :               0 *                 .00 
+   * TOTAL_HASH_JOINS         :              53 *                 .88 
+   * TOTAL_HASH_LOOPS         :               0 *                 .00 
+   * HASH_JOIN_OVERFLOWS      :               0 *                 .00 
+   * HASH_JOIN_SMALL_OVERFLOWS:               0 *                 .00 
+   * TOTAL_OLAP_FUNCS         :               0 *                 .00 
+   * OLAP_FUNC_OVERFLOWS      :               0 *                 .00 
+   ******************************************************************* 
+   APPLICATION & CATALOG CACHE 
+   ******************************************************************* 
+   * APPL_SECTION_LOOKUPS     :             478 *                7.96 
+   * APPL_SECTION_INSERTS     :             120 *                2.00 
+   * CAT_CACHE_LOOKUPS        :            5414 *               90.23 
+   * CAT_CACHE_INSERTS        :              22 *                 .36 
+   * CAT_CACHE_OVERFLOWS      :               0 *                 .00 
+   ******************************************************************* 
+   BUFFER POOL 
+   ******************************************************************* 
+   * POOL_ASYNC_DATA_READS    :               0 *                 .00 *   
+   * POOL_ASYNC_DATA_WRITES   :               0 *                 .00 *   
+   * POOL_ASYNC_INDEX_READS   :               0 *                .00 *   
+   * POOL_ASYNC_INDEX_WRITES  :               0 *                .00 *   
+   * POOL_INDEX_L_READS       :            4457 *              74.28 *   
+   * POOL_INDEX_P_READS       :               0 *                .00 *   
+   * BP INDEX HIT RATIO %     :           99.90 *                    *   
+   * POOL_INDEX_WRITES        :               0 *                .00 *   
+   * SynchronousIndex Writes :                0 *                .00 *   
+   * POOL_DATA_L_READS        :            7977 *             132.95 *   
+   * POOL_DATA_P_READS        :               0 *                .00 *   
+   * BP DATA HIT RATIO %      :           99.00 *                    *   
+   * POOL_DATA_WRITES         :               0 *                .00 *   
+   * Synchronous Data Writes  :               0 *                .00 *   
+   * POOL_TEMP_DATA_L_READS   :               4 *                .06 *   
+   * POOL_TEMP_DATA_P_READS   :               0 *                .00 *   
+   * BP TEMP DATA HIT RATIO%  :              80 *                    *   
+   * POOL_TEMP_INDEX_L_READS  :               0 *                .00 *   
+   * POOL_TEMP_INDEX_P_READS  :               0 *                .00 *   
+   * BP TEMP INDEX HIT RATIO% :               0 *                    *   
+   * DATA+TEMP+INDEX                            *                    *   
+   *             PREAD/COMMIT :             .00 *                    *   
+   * DATA+INDEX PWRITE/COMMIT :             .00 *                    *   
+   * POOL_READ_TIME msecs     :               0 *                    *   
+   * POOL_WRITE_TIME msecs    :               0 *                    *   
+   * POOL_NO_VICTIM_BUFFER    :               0 *                .00 *   
+   * POOL_DRTY_PG_STEAL_CLNS  :               0 *                .00 *   
+   * POOL_DRTY_PG_STEAL_CLNS                    *                    *   
+   *    per 1000 Commits      :             .00 *                    *   
+   ******************************************************************* 
+   NON BUFFER POOL DIRECT IO ACTIVITY 
+   ******************************************************************* 
+   * DIRECT_WRITES            :               0 *                .00 *   
+   * DIRECT_WRITE_REQS        :               0 *                .00 *   
+   * AVG DIRECT_WRITE_SIZE    :               0 *                    *   
+   * DIRECT_READS             :           34986 *             583.10 *   
+   * DIRECT_READ_REQS         :            2745 *              45.75 *   
+   * AVG DIRECT_READ_SIZE     :              12 *                    *   
+   ******************************************************************* 
+   LOCK DATA 
+   ******************************************************************* 
+   * CURRENT LOCKS_HELD       :               2 *                        
+   * LOCK_WAITS               :              25 *                .41 *   
+   * LOCK_WAIT_TIME msecs     :             327 *                    *   
+   *  msecs per LOCK_WAIT     :              12 *                    *   
+   * LOCK_WAIT_TIME                              *                    *  
+   *  per 1000 Commits, msecs :            1958 *                    *   
+   * LOCK_TIMEOUTS            :               0 *                .00 *   
+   * DEADLOCKS                :               0 *                .00 *   
+   * LOCK_TIMEOUTS+DEADLOCKS                   *                    *   
+   *    per 1000 Commits      :               0 *                    *   
+   ******************************************************************* 
+   SORT DATA 
+   ******************************************************************* 
+   * TOTAL_SORTS              :             105 *               1.75 *   
+   * SORT_OVERFLOWS           :               0 *                .00 *   
+   * TOTAL_SORT_TIME msecs    :               0 *                    *   
+   * TOTAL_SORT_TIME/COMMITS  :               0 *                    *   
+   ******************************************************************* 
+   PACKAGE ACCESS 
+   ******************************************************************* 
+   * PKG_CACHE_LOOKUPS        :             165 *               2.75 *   
+   * PKG_CACHE_INSERTS        :              85 *               1.41 *   
+   * PKG_CACHE_INSERTS                          *                    *   
+   *    per 1000 Commits      :             508 *                    
+   * PKG_CACHE_NUM_OVERFLOWS  :               0 *                .00 *   
+   ******************************************************************* 
+   DB LOG ACTIVITY 
+   ******************************************************************* 
+   * Page WRITES              :             143 *               2.38 *   
+   * Page WRITES/COMMITS      :             .85 *                    *   
+   * LOG_WRITE_TIME_S secs    :               0 *                    
+   * LogWriteTime/Commit nsecs:           42604                  *   
+   * NUM_LOG_WRITE Requests   :              14 *                .23 *   
+   * NUM_LOG_WRITE Requests                     *                    *   
+   *         PER Commit       :             .08 *                    *   
+   * NUM_PART_PAGE_WRITE RQSTS:               5 *                .08 *   
+   * NUM_BUFFER_FULL Incidents:               0 *                .00 *   
+   * Page READS               :               0 *                .00 *   
+   * NUM Read Requests        :               0 *                .00 *   
+   * LOG_READ_TIME_S secs     :               0 *   
+   * Agent READS fromLogBuffer:               0 *                .00 *   
+   * LOG_HELD_BY_DIRTY_PAGES  :         2730076 *                    *   
+   *  (End Snapshot value)    :                 *   
+   * LOG bytes to redo for    :         2730076 *                    *   
+   *          Crash Recovery                    *   
+   * App/AgentID of oldest trn: -               *                    *   
+   ******************************************************************* 
+   REALTIME RUNSTATS ACTIVITY 
+   ******************************************************************* 
+   * STATS CACHE SIZE Bytes   :               0 *   
+   * NBR STATS FABRICATIONS   :               0 *                .00 *   
+   * STATS FABRICAT TIME msecs:               0 *   
+   * NBR SYNC RUNSTATS        :               0 *                .00 *   
+   * SYNC RUNSTATS TIME msecs :               0 *   
+   * NBR ASYNC RUNSTATS       :               0 *                .00 *   
+   ******************************************************************* 
+   THRESHOLD VIOLATIONS 
+   ******************************************************************* 
+   * THRESHOLD VIOLATIONS     :               0 *                .00 *   
+   * THRESHOLD VIOLATIONS     :             .00 *   
+   *       /commits+1                           *   
+   ******************************************************************** 
+  
+
+
+*********************************************************************************************************
+********************************* TABLE DATA PERFORMANCE REPORT *****************************************
+*********************************************************************************************************
+* Capture START TIME: 2018-08-10-11.53.47.076847 
+* Capture END TIME  : 2018-08-10-11.54.47.342195 
+* DURATION:   0 Days,  0 Hours,  1  Mins,  0  Secs,  265348 USecs 
+* Capture TOTAL DURATION SECS  :    60
+
+******************** TOP 20 TABLE SCANS ***********************
+SCHEMA     TABLE                SCANS          /Sec     PTN MEMBER TAB_TYPE       FILE_ID TBSPID  IDXTBSPID LTBSPID
+---------- -------------------- ------------ ---------- --- ------ -------------- ------- ------- --------- -------
+SAMPLE     PIPE_LEAK_EVENTS                3          0 -  
+SUNSHINE   SAMPLE_DS                       3          0 -  
+SAMPLE     SMELL_EVENTS                    3          0 -  
+SAMPLE     SEWER_OVERFLOW_EVENT            3          0 -  
+SAMPLE     PIPE_BURST_EVENTS               3          0 -  
+
+******************** TOP 20 ROWS READ ***********************
+SCHEMA               TABLE                ROWS_READ         /Sec     PTN MEMBER TAB_TYPE       FILE_ID TBSPID  IDXTBSPID LTBSPID
+-------------------- -------------------- --------------- ---------- --- ------ -------------- ------- ------- --------- -------
+SYSIBM               SYSROUTINES                     1639         27 -  
+SYSIBM               SYSDATATYPES                    1192         19 -  
+SYSIBM               SYSTABLES                         22          0 -  
+SUNSHINE             SAMPLE_DS                         12          0 -  
+VDS                  CFG_INTERFACES_AUTHO               0          0 -  
+EAM                  SERVICE_ORDER                      0          0 -  
+WIH                  METER_ASSET_LOCATION               0          0 -  
+SYSIBM               SYSCOLPROPERTIES                   0          0 -  
+WIH                  MAP_IMAGE_CACHE                    0          0 -  
+WIH                  TANKLEVEL_ASSET_LOCA               0          0 -  
+SYSIBM               SYSINDEXES                         0          0 -  
+WIH                  WORKEQUIPMENT_ASSET_               0          0 -  
+SYSIBM               SYSCOLUMNS                         0          0 -  
+WIH                  PRV_ASSET_LOCATION                 0          0 -  
+WIH                  WATERQUALITYMETER_AS               0          0 -  
+WIH                  VALVE_ASSET_LOCATION               0          0 -  
+WIH                  JUNCTION_ASSET_LOCAT               0          0 -  
+WIH                  TANK_ASSET_LOCATION                0          0 -  
+WIH                  PIPE_ASSET_LOCATION                0          0 -  
+WIH                  PIPENETWORK_ASSET_LO               0          0 -  
+
+******************** TOP 20 ROWS INSERTED ***********************
+SCHEMA     TABLE                ROWS_INSERTED     /Sec     PTN MEMBER TAB_TYPE       FILE_ID TBSPID  IDXTBSPID LTBSPID  
+---------- -------------------- --------------- ---------- --- ------ -------------- ------- ------- --------- ---------
+DBMON      DUBPERF_MONTABLE_STA             587          9 -  
+VDS        CFG_INTERFACES_AUTHO               0          0 -  
+WIH        WUM_ASSET_LOCATION                 0          0 -  
+SYSIBM     SYSINDEXCOLUSE                     0          0 -  
+EAM        SERVICE_ORDER                      0          0 -  
+WIH        METER_ASSET_LOCATION               0          0 -  
+SYSIBM     SYSCOLPROPERTIES                   0          0 -  
+WIH        MAP_IMAGE_CACHE                    0          0 -  
+WIH        TANKLEVEL_ASSET_LOCA               0          0 -  
+SYSIBM     SYSINDEXES                         0          0 -  
+WIH        WORKEQUIPMENT_ASSET_               0          0 -  
+SYSIBM     SYSCOLUMNS                         0          0 -  
+WIH        PRV_ASSET_LOCATION                 0          0 -  
+SYSIBM     SYSTABLES                          0          0 -  
+WIH        WATERQUALITYMETER_AS               0          0 -  
+WIH        VALVE_ASSET_LOCATION               0          0 -  
+WIH        JUNCTION_ASSET_LOCAT               0          0 -  
+WIH        TANK_ASSET_LOCATION                0          0 -  
+WIH        PIPE_ASSET_LOCATION                0          0 -  
+WIH        PIPENETWORK_ASSET_LO               0          0 -  
+
+******************** TOP 20 ROWS UPDATED ***********************
+SCHEMA     TABLE                ROWS_UPDATED          /Sec PTN MEMBER TAB_TYPE       FILE_ID TBSPID  IDXTBSPID LTBSPID
+---------- -------------------- --------------- ---------- --- ------ -------------- ------- ------- --------- -------
+VDS        CFG_INTERFACES_AUTHO               0          0 -  
+EAM        WORK_ORDER                         0          0 -  
+WIH        WUM_ASSET_LOCATION                 0          0 -  
+SYSIBM     SYSINDEXCOLUSE                     0          0 -  
+EAM        SERVICE_ORDER                      0          0 -  
+WIH        METER_ASSET_LOCATION               0          0 -  
+SYSIBM     SYSCOLPROPERTIES                   0          0 -  
+WIH        MAP_IMAGE_CACHE                    0          0 -  
+WIH        TANKLEVEL_ASSET_LOCA               0          0 -  
+SYSIBM     SYSINDEXES                         0          0 -  
+WIH        WORKEQUIPMENT_ASSET_               0          0 -  
+SYSIBM     SYSCOLUMNS                         0          0 -  
+WIH        PRV_ASSET_LOCATION                 0          0 -  
+SYSIBM     SYSTABLES                          0          0 -  
+WIH        WATERQUALITYMETER_AS               0          0 -  
+WIH        VALVE_ASSET_LOCATION               0          0 -  
+WIH        JUNCTION_ASSET_LOCAT               0          0 -  
+WIH        TANK_ASSET_LOCATION                0          0 -  
+WIH        PIPE_ASSET_LOCATION                0          0 -  
+WIH        PIPENETWORK_ASSET_LO               0          0 -  
+
+******************** TOP 20 ROWS DELETED ***********************
+SCHEMA     TABLE                ROWS_DELETED      /Sec     PTN MEMBER TAB_TYPE       FILE_ID TBSPID  IDXTBSPID LTBSPID
+---------- -------------------- --------------- ---------- --- ------ -------------- ------- ------- --------- -------
+VDS        CFG_INTERFACES_AUTHO               0          0 -  
+EAM        WORK_ORDER                         0          0 -  
+WIH        WUM_ASSET_LOCATION                 0          0 -  
+SYSIBM     SYSINDEXCOLUSE                     0          0 -  
+EAM        SERVICE_ORDER                      0          0 -  
+WIH        METER_ASSET_LOCATION               0          0 -  
+SYSIBM     SYSCOLPROPERTIES                   0          0 -  
+WIH        MAP_IMAGE_CACHE                    0          0 -  
+WIH        TANKLEVEL_ASSET_LOCA               0          0 -  
+SYSIBM     SYSINDEXES                         0          0 -  
+WIH        WORKEQUIPMENT_ASSET_               0          0 -  
+SYSIBM     SYSCOLUMNS                         0          0 -  
+WIH        PRV_ASSET_LOCATION                 0          0 -  
+SYSIBM     SYSTABLES                          0          0 -  
+WIH        WATERQUALITYMETER_AS               0          0 -  
+WIH        VALVE_ASSET_LOCATION               0          0 -  
+WIH        JUNCTION_ASSET_LOCAT               0          0 -  
+WIH        TANK_ASSET_LOCATION                0          0 -  
+WIH        PIPE_ASSET_LOCATION                0          0 -  
+WIH        PIPENETWORK_ASSET_LO               0          0 -  
+
+******************** TOP 20 OVERFLOW ACCESSES ***********************
+SCHEMA     TABLE                OVERFLOW_ACCESSES   /Sec     PTN MEMBER TAB_TYPE       FILE_ID TBSPID  IDXTBSPID LTBSPID
+---------- -------------------- ----------------- ---------- --- ------ -------------- ------- ------- --------- -------
+VDS        CFG_INTERFACES_AUTHO               0            0 -  
+EAM        WORK_ORDER                         0            0 -  
+WIH        WUM_ASSET_LOCATION                 0            0 -  
+SYSIBM     SYSINDEXCOLUSE                     0            0 -  
+EAM        SERVICE_ORDER                      0            0 -  
+WIH        METER_ASSET_LOCATION               0            0 -  
+SYSIBM     SYSCOLPROPERTIES                   0            0 -  
+WIH        MAP_IMAGE_CACHE                    0            0 -  
+WIH        TANKLEVEL_ASSET_LOCA               0            0 -  
+SYSIBM     SYSINDEXES                         0            0 -  
+WIH        WORKEQUIPMENT_ASSET_               0            0 -  
+SYSIBM     SYSCOLUMNS                         0            0 -  
+WIH        PRV_ASSET_LOCATION                 0            0 -  
+SYSIBM     SYSTABLES                          0            0 -  
+WIH        WATERQUALITYMETER_AS               0            0 -  
+WIH        VALVE_ASSET_LOCATION               0            0 -  
+WIH        JUNCTION_ASSET_LOCAT               0            0 -  
+WIH        TANK_ASSET_LOCATION                0            0 -  
+WIH        PIPE_ASSET_LOCATION                0            0 -  
+WIH        PIPENETWORK_ASSET_LO               0            0 -  
+
+******************** TOP 20 OVERFLOW CREATES ***********************
+SCHEMA     TABLE                OVERFLOW_CREATES   /Sec     PTN MEMBER TAB_TYPE       FILE_ID TBSPID  IDXTBSPID LTBSPID
+---------- -------------------- ---------------- ---------- --- ------ -------------- ------- ------- --------- -------
+VDS        CFG_INTERFACES_AUTHO               0           0 -        0 USER_TABLE         208       2         2       2
+EAM        WORK_ORDER                         0           0 -        0 USER_TABLE           6       6         6       6
+WIH        WUM_ASSET_LOCATION                 0           0 -        0 USER_TABLE         175       2         2       2
+SYSIBM     SYSINDEXCOLUSE                     0           0 -        0 CATALOG_TABLE        9       0         0       0
+EAM        SERVICE_ORDER                      0           0 -        0 USER_TABLE           5       6         6       6
+WIH        METER_ASSET_LOCATION               0           0 -        0 USER_TABLE         174       2         2       2
+SYSIBM     SYSCOLPROPERTIES                   0           0 -        0 CATALOG_TABLE        8       0         0       0
+WIH        MAP_IMAGE_CACHE                    0           0 -        0 USER_TABLE           4       6         6       6
+WIH        TANKLEVEL_ASSET_LOCA               0           0 -        0 USER_TABLE         173       2         2       2
+SYSIBM     SYSINDEXES                         0           0 -        0 CATALOG_TABLE        7       0         0       0
+WIH        WORKEQUIPMENT_ASSET_               0           0 -        0 USER_TABLE         172       2         2       2
+SYSIBM     SYSCOLUMNS                         0           0 -        0 CATALOG_TABLE        6       0         0       0
+WIH        PRV_ASSET_LOCATION                 0           0 -        0 USER_TABLE         171       2         2       2
+SYSIBM     SYSTABLES                          0           0 -        0 CATALOG_TABLE        5       0         0       0
+WIH        WATERQUALITYMETER_AS               0           0 -        0 USER_TABLE         170       2         2       2
+WIH        VALVE_ASSET_LOCATION               0           0 -        0 USER_TABLE         169       2         2       2
+WIH        JUNCTION_ASSET_LOCAT               0           0 -        0 USER_TABLE         168       2         2       2
+WIH        TANK_ASSET_LOCATION                0           0 -        0 USER_TABLE         167       2         2       2
+WIH        PIPE_ASSET_LOCATION                0           0 -        0 USER_TABLE         166       2         2       2
+WIH        PIPENETWORK_ASSET_LO               0           0 -        0 USER_TABLE         165       2         2       2
+
+******************** TOP 20 PAGE REORGS ***********************
+SCHEMA     TABLE                PAGE_REORGS       /Sec     PTN MEMBER TAB_TYPE       FILE_ID TBSPID  IDXTBSPID LTBSPID
+---------- -------------------- --------------- ---------- --- ------ -------------- ------- ------- --------- -------
+VDS        CFG_INTERFACES_AUTHO               0          0 -        0 USER_TABLE         208       2         2       2
+EAM        WORK_ORDER                         0          0 -        0 USER_TABLE           6       6         6       6
+WIH        WUM_ASSET_LOCATION                 0          0 -        0 USER_TABLE         175       2         2       2
+SYSIBM     SYSINDEXCOLUSE                     0          0 -        0 CATALOG_TABLE        9       0         0       0
+EAM        SERVICE_ORDER                      0          0 -        0 USER_TABLE           5       6         6       6
+WIH        METER_ASSET_LOCATION               0          0 -        0 USER_TABLE         174       2         2       2
+SYSIBM     SYSCOLPROPERTIES                   0          0 -        0 CATALOG_TABLE        8       0         0       0
+WIH        MAP_IMAGE_CACHE                    0          0 -        0 USER_TABLE           4       6         6       6
+WIH        TANKLEVEL_ASSET_LOCA               0          0 -        0 USER_TABLE         173       2         2       2
+SYSIBM     SYSINDEXES                         0          0 -        0 CATALOG_TABLE        7       0         0       0
+WIH        WORKEQUIPMENT_ASSET_               0          0 -        0 USER_TABLE         172       2         2       2
+SYSIBM     SYSCOLUMNS                         0          0 -        0 CATALOG_TABLE        6       0         0       0
+WIH        PRV_ASSET_LOCATION                 0          0 -        0 USER_TABLE         171       2         2       2
+SYSIBM     SYSTABLES                          0          0 -        0 CATALOG_TABLE        5       0         0       0
+WIH        WATERQUALITYMETER_AS               0          0 -        0 USER_TABLE         170       2         2       2
+WIH        VALVE_ASSET_LOCATION               0          0 -        0 USER_TABLE         169       2         2       2
+WIH        JUNCTION_ASSET_LOCAT               0          0 -        0 USER_TABLE         168       2         2       2
+WIH        TANK_ASSET_LOCATION                0          0 -        0 USER_TABLE         167       2         2       2
+WIH        PIPE_ASSET_LOCATION                0          0 -        0 USER_TABLE         166       2         2       2
+WIH        PIPENETWORK_ASSET_LO               0          0 -        0 USER_TABLE         165       2         2       2
+
+*****************************************************************
+***************** END DUBPERF PERFORMANCE REPORTS ***************
+*****************************************************************
+
+*********************************************************************************************************
+********************************* DB2 CONTAINER DATA PERFORMANCE REPORT *****************************************
+*********************************************************************************************************
+* Capture START TIME: 2018-08-10-11.53.47.052328 
+* Capture END TIME  : 2018-08-10-11.54.47.279648 
+* DURATION:   0 Days,  0 Hours,  1  Mins,  0  Secs,  227320 USecs 
+* Capture TOTAL DURATION SECS  :    60
+
+
+ ************************* CONTAINER ******************************************************************** 
+ * TBSP_NAME               : 	 LARGETBSPACE1   
+ * TPSP_ID                 : 	               6 
+  * CONTAINER_NAME          : 	  /db2data/wihdb/db2i1own/NODE0000/WIHDB/T0000006/C0000000.LRG                                         
+  * CONTAINER_ID            : 	                0 
+  * CONTAINER_TYPE          : 	  FILE_EXTENT_TAG  
+  * ACCESSIBLE              : 	                1 
+  * MEMBER                  : 	                0 
+  * STRIPE_SET              : 	                0 
+  * FILE_SYSTEM ID          : 	            64768 
+  * FILE_SYSTEM SIZE        : 	     506835329024 
+  * FILESYSTEM_USED         : 	      39978221568 
+  * TOTAL_PAGES             : 	             1024 
+  * USABLE_PAGES            : 	              992 
+  ------------------------- Performance Data --------------------------------------------------- 
+  * DIRECT_READS            : 	                0  * DR/SEC :        0  * T_DR_MSECS :            0  * MSECS/DR :     0 
+  * DIRECT_WRITES           : 	                0  * DW/SEC :        0  * T_DW_MSECS :            0  * MSECS/DW :     0 
+  * PAGES_READ (Physical)   : 	                0  * PR/SEC :        0  * T_RD_MSECS :            0  * MSECS/RD :     0 
+  *  (Data, Index, XML)      	  
+  * PAGES_WRITTEN           : 	                0  * PW/SEC :        0  * T_WR_MSECS :            0  * MSECS/WR :     0 
+   * VECTORED_IOS            : 	                 0  * IO/SEC :        0 
+   *  (Sequential Prefetches)  	   
+   * PAGES_FROM_VECTORED_IOS : 	                 0  * PG/SEC :        0 
+   * BLOCK_IOS               : 	                 0  * IO/SEC :        0 
+   * PAGES_FROM_BLOCK_IOS    : 	                 0  * PG/SEC :        0
+
+ ************************* CONTAINER ******************************************************************** 
+ * TBSP_NAME               : 	 SYSCATSPACE     
+ * TPSP_ID                 : 	               0 
+  * CONTAINER_NAME          : 	  /db2data/wihdb/db2i1own/NODE0000/WIHDB/T0000000/C0000000.CAT                                         
+  * CONTAINER_ID            : 	                0 
+  * CONTAINER_TYPE          : 	  FILE_EXTENT_TAG  
+  * ACCESSIBLE              : 	                1 
+  * MEMBER                  : 	                0 
+  * STRIPE_SET              : 	                0 
+  * FILE_SYSTEM ID          : 	            64768 
+  * FILE_SYSTEM SIZE        : 	     506835329024 
+  * FILESYSTEM_USED         : 	      39978221568 
+  * TOTAL_PAGES             : 	            28672 
+  * USABLE_PAGES            : 	            28668 
+  ------------------------- Performance Data --------------------------------------------------- 
+  * DIRECT_READS            : 	            34986  * DR/SEC :      583  * T_DR_MSECS :         1963  * MSECS/DR :     0 
+  * DIRECT_WRITES           : 	                0  * DW/SEC :        0  * T_DW_MSECS :            0  * MSECS/DW :     0 
+  * PAGES_READ (Physical)   : 	                0  * PR/SEC :        0  * T_RD_MSECS :            0  * MSECS/RD :     0 
+  *  (Data, Index, XML)      	  
+  * PAGES_WRITTEN           : 	                0  * PW/SEC :        0  * T_WR_MSECS :            0  * MSECS/WR :     0 
+   * VECTORED_IOS            : 	                 0  * IO/SEC :        0 
+   *  (Sequential Prefetches)  	   
+   * PAGES_FROM_VECTORED_IOS : 	                 0  * PG/SEC :        0 
+   * BLOCK_IOS               : 	                 0  * IO/SEC :        0 
+   * PAGES_FROM_BLOCK_IOS    : 	                 0  * PG/SEC :        0
+
+ ************************* CONTAINER ******************************************************************** 
+ * TBSP_NAME               : 	 SYSTOOLSPACE    
+ * TPSP_ID                 : 	               4 
+  * CONTAINER_NAME          : 	  /db2data/wihdb/db2i1own/NODE0000/WIHDB/T0000004/C0000000.LRG                                         
+  * CONTAINER_ID            : 	                0 
+  * CONTAINER_TYPE          : 	  FILE_EXTENT_TAG  
+  * ACCESSIBLE              : 	                1 
+  * MEMBER                  : 	                0 
+  * STRIPE_SET              : 	                0 
+  * FILE_SYSTEM ID          : 	            64768 
+  * FILE_SYSTEM SIZE        : 	     506835329024 
+  * FILESYSTEM_USED         : 	      39978221568 
+  * TOTAL_PAGES             : 	             4096 
+  * USABLE_PAGES            : 	             4092 
+  ------------------------- Performance Data --------------------------------------------------- 
+  * DIRECT_READS            : 	                0  * DR/SEC :        0  * T_DR_MSECS :            0  * MSECS/DR :     0 
+  * DIRECT_WRITES           : 	                0  * DW/SEC :        0  * T_DW_MSECS :            0  * MSECS/DW :     0 
+  * PAGES_READ (Physical)   : 	                0  * PR/SEC :        0  * T_RD_MSECS :            0  * MSECS/RD :     0 
+  *  (Data, Index, XML)      	  
+  * PAGES_WRITTEN           : 	                0  * PW/SEC :        0  * T_WR_MSECS :            0  * MSECS/WR :     0 
+   * VECTORED_IOS            : 	                 0  * IO/SEC :        0 
+   *  (Sequential Prefetches)  	   
+   * PAGES_FROM_VECTORED_IOS : 	                 0  * PG/SEC :        0 
+   * BLOCK_IOS               : 	                 0  * IO/SEC :        0 
+   * PAGES_FROM_BLOCK_IOS    : 	                 0  * PG/SEC :        0
+
+ ************************* CONTAINER ******************************************************************** 
+ * TBSP_NAME               : 	 SYSTOOLSTMPSPAC 
+ * TPSP_ID                 : 	               5 
+  * CONTAINER_NAME          : 	  /db2data/wihdb/db2i1own/NODE0000/WIHDB/T0000005/C0000000.UTM                                         
+  * CONTAINER_ID            : 	                0 
+  * CONTAINER_TYPE          : 	  PATH             
+  * ACCESSIBLE              : 	                1 
+  * MEMBER                  : 	                0 
+  * STRIPE_SET              : 	                0 
+  * FILE_SYSTEM ID          : 	            64768 
+  * FILE_SYSTEM SIZE        : 	     506835329024 
+  * FILESYSTEM_USED         : 	      39978221568 
+  * TOTAL_PAGES             : 	                1 
+  * USABLE_PAGES            : 	                1 
+  ------------------------- Performance Data --------------------------------------------------- 
+  * DIRECT_READS            : 	                0  * DR/SEC :        0  * T_DR_MSECS :            0  * MSECS/DR :     0 
+  * DIRECT_WRITES           : 	                0  * DW/SEC :        0  * T_DW_MSECS :            0  * MSECS/DW :     0 
+  * PAGES_READ (Physical)   : 	                0  * PR/SEC :        0  * T_RD_MSECS :            0  * MSECS/RD :     0 
+  *  (Data, Index, XML)      	  
+  * PAGES_WRITTEN           : 	                0  * PW/SEC :        0  * T_WR_MSECS :            0  * MSECS/WR :     0 
+   * VECTORED_IOS            : 	                 0  * IO/SEC :        0 
+   *  (Sequential Prefetches)  	   
+   * PAGES_FROM_VECTORED_IOS : 	                 0  * PG/SEC :        0 
+   * BLOCK_IOS               : 	                 0  * IO/SEC :        0 
+   * PAGES_FROM_BLOCK_IOS    : 	                 0  * PG/SEC :        0
+
+ ************************* CONTAINER ******************************************************************** 
+ * TBSP_NAME               : 	 TEMPSPACE1      
+ * TPSP_ID                 : 	               1 
+  * CONTAINER_NAME          : 	  /db2data/wihdb/db2i1own/NODE0000/WIHDB/T0000001/C0000000.TMP                                         
+  * CONTAINER_ID            : 	                0 
+  * CONTAINER_TYPE          : 	  PATH             
+  * ACCESSIBLE              : 	                1 
+  * MEMBER                  : 	                0 
+  * STRIPE_SET              : 	                0 
+  * FILE_SYSTEM ID          : 	            64768 
+  * FILE_SYSTEM SIZE        : 	     506835329024 
+  * FILESYSTEM_USED         : 	      39978221568 
+  * TOTAL_PAGES             : 	                5 
+  * USABLE_PAGES            : 	                5 
+  ------------------------- Performance Data --------------------------------------------------- 
+  * DIRECT_READS            : 	                0  * DR/SEC :        0  * T_DR_MSECS :            0  * MSECS/DR :     0 
+  * DIRECT_WRITES           : 	                0  * DW/SEC :        0  * T_DW_MSECS :            0  * MSECS/DW :     0 
+  * PAGES_READ (Physical)   : 	                0  * PR/SEC :        0  * T_RD_MSECS :            0  * MSECS/RD :     0 
+  *  (Data, Index, XML)      	  
+  * PAGES_WRITTEN           : 	                0  * PW/SEC :        0  * T_WR_MSECS :            0  * MSECS/WR :     0 
+   * VECTORED_IOS            : 	                 0  * IO/SEC :        0 
+   *  (Sequential Prefetches)  	   
+   * PAGES_FROM_VECTORED_IOS : 	                 0  * PG/SEC :        0 
+   * BLOCK_IOS               : 	                 0  * IO/SEC :        0 
+   * PAGES_FROM_BLOCK_IOS    : 	                 0  * PG/SEC :        0
+
+ ************************* CONTAINER ******************************************************************** 
+ * TBSP_NAME               : 	 TMP32K          
+ * TPSP_ID                 : 	               3 
+  * CONTAINER_NAME          : 	  /db2logs/wihdb/db2i1own/NODE0000/SQL00001/TMP32K                                                     
+  * CONTAINER_ID            : 	                0 
+  * CONTAINER_TYPE          : 	  PATH             
+  * ACCESSIBLE              : 	                1 
+  * MEMBER                  : 	                0 
+  * STRIPE_SET              : 	                0 
+  * FILE_SYSTEM ID          : 	            64768 
+  * FILE_SYSTEM SIZE        : 	     506835329024 
+  * FILESYSTEM_USED         : 	      39978221568 
+  * TOTAL_PAGES             : 	                1 
+  * USABLE_PAGES            : 	                1 
+  ------------------------- Performance Data --------------------------------------------------- 
+  * DIRECT_READS            : 	                0  * DR/SEC :        0  * T_DR_MSECS :            0  * MSECS/DR :     0 
+  * DIRECT_WRITES           : 	                0  * DW/SEC :        0  * T_DW_MSECS :            0  * MSECS/DW :     0 
+  * PAGES_READ (Physical)   : 	                0  * PR/SEC :        0  * T_RD_MSECS :            0  * MSECS/RD :     0 
+  *  (Data, Index, XML)      	  
+  * PAGES_WRITTEN           : 	                0  * PW/SEC :        0  * T_WR_MSECS :            0  * MSECS/WR :     0 
+   * VECTORED_IOS            : 	                 0  * IO/SEC :        0 
+   *  (Sequential Prefetches)  	   
+   * PAGES_FROM_VECTORED_IOS : 	                 0  * PG/SEC :        0 
+   * BLOCK_IOS               : 	                 0  * IO/SEC :        0 
+   * PAGES_FROM_BLOCK_IOS    : 	                 0  * PG/SEC :        0
+
+ ************************* CONTAINER ******************************************************************** 
+ * TBSP_NAME               : 	 USERSPACE1      
+ * TPSP_ID                 : 	               2 
+  * CONTAINER_NAME          : 	  /db2data/wihdb/db2i1own/NODE0000/WIHDB/T0000002/C0000000.LRG                                         
+  * CONTAINER_ID            : 	                0 
+  * CONTAINER_TYPE          : 	  FILE_EXTENT_TAG  
+  * ACCESSIBLE              : 	                1 
+  * MEMBER                  : 	                0 
+  * STRIPE_SET              : 	                0 
+  * FILE_SYSTEM ID          : 	            64768 
+  * FILE_SYSTEM SIZE        : 	     506835329024 
+  * FILESYSTEM_USED         : 	      39978221568 
+  * TOTAL_PAGES             : 	           229376 
+  * USABLE_PAGES            : 	           229344 
+  ------------------------- Performance Data --------------------------------------------------- 
+  * DIRECT_READS            : 	                0  * DR/SEC :        0  * T_DR_MSECS :            0  * MSECS/DR :     0 
+  * DIRECT_WRITES           : 	                0  * DW/SEC :        0  * T_DW_MSECS :            0  * MSECS/DW :     0 
+  * PAGES_READ (Physical)   : 	                0  * PR/SEC :        0  * T_RD_MSECS :            0  * MSECS/RD :     0 
+  *  (Data, Index, XML)      	  
+  * PAGES_WRITTEN           : 	                0  * PW/SEC :        0  * T_WR_MSECS :            0  * MSECS/WR :     0 
+   * VECTORED_IOS            : 	                 0  * IO/SEC :        0 
+   *  (Sequential Prefetches)  	   
+   * PAGES_FROM_VECTORED_IOS : 	                 0  * PG/SEC :        0 
+   * BLOCK_IOS               : 	                 0  * IO/SEC :        0 
+   * PAGES_FROM_BLOCK_IOS    : 	                 0  * PG/SEC :        0
+
+
+**********************************************************************
+******** DUBPERF DB SNAPSHOT TABLESPACE REPORT ***********************
+**********************************************************************
+* Capture START TIME: 2018-08-10-11.53.47.040873 
+* Capture END TIME  : 2018-08-10-11.54.47.267606 
+* DURATION:   0 Days,  0 Hours,  1  Mins,  0  Secs,  226733 USecs 
+* Capture TOTAL DURATION SECS  :    60
+
+**********************************************************************
+
+ TBSP_NAME                     : SYSCATSPACE                    
+ TBSPID                        :            0 
+ MEMBER                        :            0 
+  TBSP_TYPE                     : DMS        
+  TBSP_CONTENT_TYPE             : ANY               
+  TBSP_STATE @Start             : NORMAL                         
+  TBSP_STATE @End               : NORMAL                         
+  TBSP_REBALANCER_MODE          : NO_REBAL                       
+  TBSP_PAGE_SIZE                :         8192 
+  TBSP_EXTENT_SIZE              :            4 
+  TBSP_PREFETCH_SIZE            :            4 
+  TBSP_USING_AUTO_STORAGE       :            1 
+  TBSP_AUTO_RESIZE_ENABLED      :            1 
+  RECLAIMABLE_SPACE_ENABLED     :               1 
+  STORAGE_GROUP_NAME            :     IBMSTOGROUP 
+  STORAGE_GROUP_ID              :               0 
+  AUTO_STORAGE_HYBRID           :               0 
+  TABLESPACE_MIN_RECOVERY_TIME  : -               
+  TBSP_TRACKMOD_STATE           :     UNAVAILABLE 
+  TBSP_DATATAG                  :               0 
+  ************************************************************************************** 
+  DIRECT_READS                  :           34986 *            583.10 
+  DIRECT_READ_REQS              :            2745 *             45.75 
+  DIRECT_READ_TIME_MSECS        :            1962 *  
+  DIRECT_WRITE_TIME_MSECS       :               0 *  
+  DIRECT_WRITES                 :               0 *               .00 
+  DIRECT_WRITE_REQS             :               0 *               .00 
+  ************************************************************************************** 
+  POOL_DATA_L_READS             :            5598 *             93.30 
+  POOL_INDEX_L_READS            :            4315 *              71.91 
+   POOL_XDA_L_READS              :               0 *                .00 
+   ************************************************************************************** 
+   POOL_TEMP_DATA_L_READS        :               0 *                .00 
+   POOL_TEMP_INDEX_L_READS       :               0 *                .00 
+   POOL_TEMP_XDA_L_READS         :               0 *                .00 
+   ************************************************************************************** 
+   POOL_DATA_P_READS             :               0 *                .00 
+   POOL_INDEX_P_READS            :               0 *                .00 
+   POOL_XDA_P_READS              :               0 *                .00 
+   ************************************************************************************** 
+   POOL_TEMP_DATA_P_READS        :               0 *                .00 
+   POOL_TEMP_INDEX_P_READS       :               0 *                .00 
+   POOL_TEMP_XDA_P_READS         :               0 *                .00 
+   ************************************************************************************** 
+   POOL_DATA_WRITES              :               0 *                .00 
+   POOL_INDEX_WRITES             :               0 *                .00 
+   POOL_XDA_WRITES               :               0 *                .00 
+   ************************************************************************************** 
+   POOL_ASYNC_DATA_READS         :               0 *                .00 
+   POOL_ASYNC_DATA_READ_REQS     :               0 *                .00 
+   POOL_ASYNC_INDEX_READS        :               0 *                .00 
+   POOL_ASYNC_INDEX_READ_REQS    :               0 *                .00 
+   POOL_ASYNC_XDA_READS          :               0 *                .00 
+   POOL_ASYNC_XDA_READ_REQS        :               0 *                .00 
+   ************************************************************************************** 
+   POOL_ASYNC_DATA_WRITES        :               0 *                .00 
+   POOL_ASYNC_INDEX_WRITES       :               0 *                .00 
+   POOL_ASYNC_XDA_WRITES         :               0 *                .00 
+   POOL_READ_TIME_MSECS          :               0 *                .00 
+   POOL_WRITE_TIME_MSECS         :               0 *                .00 
+   ************************************************************************************** 
+   POOL_ASYNC_READ_TIME          :               0 *   
+   POOL_ASYNC_WRITE_TIME         :               0 *   
+   ************************************************************************************** 
+   VECTORED_IOS                  :               0 *                .00 
+   PAGES_FROM_VECTORED_IOS       :               0 *                .00 
+   BLOCK_IOS                     :               0 *                .00 
+   PAGES_FROM_BLOCK_IOS          :               0 *                .00 
+   UNREAD_PREFETCH_PAGES         :               0 *                .00 
+   PREFETCH_WAIT_TIME            :               0 *   
+   PREFETCH_WAITS                :               0 *                .00 
+   ************************************************************************************** 
+   FILES_CLOSED                  :               0 *                .00 
+   ************************************************************************************** 
+   TBSP_USED_PAGES_START            :           24712 *   
+   TBSP_USED_PAGES_END              :           24712 *   
+   TBSP_FREE_PAGES_DMS_START        :            3956 *   
+   TBSP_FREE_PAGES_DMS_END          :            3956 *   
+   TBSP_USABLE_PAGES_START          :           28668 *   
+   TBSP_USABLE_PAGES_END            :           28668 *   
+   TBSP_TOTAL_PAGES_START           :           28672 *   
+   TBSP_TOTAL_PAGES_END             :           28672 *   
+   TBSP_PENDING_FREE_PAGES_DMS_START:               0 *   
+   TBSP_PENDING_FREE_PAGES_DMS_END  :               0 *   
+   TBSP_PAGE_TOP_DMS_START          :           24712 *   
+   TBSP_PAGE_TOP_DMS_END            :           24712 *   
+   TBSP_MAX_PAGE_TOP_DMS_START      :           24712 *   
+   TBSP_MAX_PAGE_TOP_DMS_END        :           24712 *   
+   ************************************************************************************** 
+   TBSP_PATHS_DROPPED               :               0 *   
+   POOL_QUEUED_ASYNC_DATA_REQS      :               0 *                .00 
+   POOL_QUEUED_ASYNC_INDEX_REQS     :               0 *                .00 
+   POOL_QUEUED_ASYNC_XDA_REQS       :               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_DATA_REQS :               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_INDEX_REQS:               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_XDA_REQS  :               0 *                .00 
+   POOL_QUEUED_ASYNC_OTHER_REQS     :               0 *                .00 
+   POOL_QUEUED_ASYNC_DATA_PAGES     :               0 *                .00 
+   POOL_QUEUED_ASYNC_INDEX_PAGES    :            9769 *             162.81 
+   POOL_QUEUED_ASYNC_XDA_PAGES    :               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_DATA_PAGES:               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_INDEX_PAGES:               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_XDA_PAGES  :               0 *                .00 
+   ************************************************************************************** 
+   POOL_FAILED_ASYNC_DATA_REQS       :               0 *                .00 
+   POOL_FAILED_ASYNC_INDEX_REQS      :               0 *                .00 
+   POOL_FAILED_ASYNC_XDA_REQS        :               0 *                .00 
+   POOL_FAILED_ASYNC_TEMP_DATA_REQS  :               0 *                .00 
+   POOL_FAILED_ASYNC_TEMP_INDEX_REQS :               0 *                .00 
+   POOL_FAILED_ASYNC_TEMP_XDA_REQS   :               0 *                .00 
+   POOL_FAILED_ASYNC_OTHER_REQS      :               0 *                .00 
+   ************************************************************************************** 
+   SKIPPED_PREFETCH_DATA_P_READS          :               0 *                .00 
+   SKIPPED_PREFETCH_INDEX_P_READS         :               0 *                .00 
+   SKIPPED_PREFETCH_XDA_P_READS           :               0 *                .00 
+   SKIPPED_PREFETCH_TEMP_DATA_P_READS     :               0 *                .00 
+   SKIPPED_PREFETCH_TEMP_INDEX_P_READS    :               0 *                .00 
+   SKIPPED_PREFETCH_TEMP_XDA_P_READS      :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_DATA_P_READS      :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_INDEX_P_READS     :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_XDA_P_READS       :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_TEMP_DATA_P_READS :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_TEMP_INDEX_P_READS:               0 *                .00 
+   SKIPPED_PREFETCH_UOW_TEMP_XDA_P_READS  :               0 *                .00 
+   ************************************************************************************** 
+   **************************************************************************************
+
+ TBSP_NAME                     : TEMPSPACE1                     
+ TBSPID                        :            1 
+ MEMBER                        :            0 
+  TBSP_TYPE                     : SMS        
+  TBSP_CONTENT_TYPE             : SYSTEMP           
+  TBSP_STATE @Start             : NORMAL                         
+  TBSP_STATE @End               : NORMAL                         
+  TBSP_REBALANCER_MODE          : NO_REBAL                       
+  TBSP_PAGE_SIZE                :         8192 
+  TBSP_EXTENT_SIZE              :           32 
+  TBSP_PREFETCH_SIZE            :           32 
+  TBSP_USING_AUTO_STORAGE       :            1 
+  TBSP_AUTO_RESIZE_ENABLED      :            0 
+  RECLAIMABLE_SPACE_ENABLED     :               0 
+  STORAGE_GROUP_NAME            :     IBMSTOGROUP 
+  STORAGE_GROUP_ID              :               0 
+  AUTO_STORAGE_HYBRID           :               0 
+  TABLESPACE_MIN_RECOVERY_TIME  : -               
+  TBSP_TRACKMOD_STATE           :     UNAVAILABLE 
+  TBSP_DATATAG                  :               0 
+  ************************************************************************************** 
+  DIRECT_READS                  :               0 *               .00 
+  DIRECT_READ_REQS              :               0 *               .00 
+  DIRECT_READ_TIME_MSECS        :               0 *  
+  DIRECT_WRITE_TIME_MSECS       :               0 *  
+  DIRECT_WRITES                 :               0 *               .00 
+  DIRECT_WRITE_REQS             :               0 *               .00 
+  ************************************************************************************** 
+  POOL_DATA_L_READS             :               0 *               .00 
+  POOL_INDEX_L_READS            :               0 *                .00 
+   POOL_XDA_L_READS              :               0 *                .00 
+   ************************************************************************************** 
+   POOL_TEMP_DATA_L_READS        :               4 *                .06 
+   POOL_TEMP_INDEX_L_READS       :               0 *                .00 
+   POOL_TEMP_XDA_L_READS         :               0 *                .00 
+   ************************************************************************************** 
+   POOL_DATA_P_READS             :               0 *                .00 
+   POOL_INDEX_P_READS            :               0 *                .00 
+   POOL_XDA_P_READS              :               0 *                .00 
+   ************************************************************************************** 
+   POOL_TEMP_DATA_P_READS        :               0 *                .00 
+   POOL_TEMP_INDEX_P_READS       :               0 *                .00 
+   POOL_TEMP_XDA_P_READS         :               0 *                .00 
+   ************************************************************************************** 
+   POOL_DATA_WRITES              :               0 *                .00 
+   POOL_INDEX_WRITES             :               0 *                .00 
+   POOL_XDA_WRITES               :               0 *                .00 
+   ************************************************************************************** 
+   POOL_ASYNC_DATA_READS         :               0 *                .00 
+   POOL_ASYNC_DATA_READ_REQS     :               0 *                .00 
+   POOL_ASYNC_INDEX_READS        :               0 *                .00 
+   POOL_ASYNC_INDEX_READ_REQS    :               0 *                .00 
+   POOL_ASYNC_XDA_READS          :               0 *                .00 
+   POOL_ASYNC_XDA_READ_REQS        :               0 *                .00 
+   ************************************************************************************** 
+   POOL_ASYNC_DATA_WRITES        :               0 *                .00 
+   POOL_ASYNC_INDEX_WRITES       :               0 *                .00 
+   POOL_ASYNC_XDA_WRITES         :               0 *                .00 
+   POOL_READ_TIME_MSECS          :               0 *                .00 
+   POOL_WRITE_TIME_MSECS         :               0 *                .00 
+   ************************************************************************************** 
+   POOL_ASYNC_READ_TIME          :               0 *   
+   POOL_ASYNC_WRITE_TIME         :               0 *   
+   ************************************************************************************** 
+   VECTORED_IOS                  :               0 *                .00 
+   PAGES_FROM_VECTORED_IOS       :               0 *                .00 
+   BLOCK_IOS                     :               0 *                .00 
+   PAGES_FROM_BLOCK_IOS          :               0 *                .00 
+   UNREAD_PREFETCH_PAGES         :               0 *                .00 
+   PREFETCH_WAIT_TIME            :               0 *   
+   PREFETCH_WAITS                :               0 *                .00 
+   ************************************************************************************** 
+   FILES_CLOSED                  :               0 *                .00 
+   ************************************************************************************** 
+   TBSP_USED_PAGES_START            :               5 *   
+   TBSP_USED_PAGES_END              :               5 *   
+   TBSP_FREE_PAGES_DMS_START        :               0 *   
+   TBSP_FREE_PAGES_DMS_END          :               0 *   
+   TBSP_USABLE_PAGES_START          :               5 *   
+   TBSP_USABLE_PAGES_END            :               5 *   
+   TBSP_TOTAL_PAGES_START           :               5 *   
+   TBSP_TOTAL_PAGES_END             :               5 *   
+   TBSP_PENDING_FREE_PAGES_DMS_START:               0 *   
+   TBSP_PENDING_FREE_PAGES_DMS_END  :               0 *   
+   TBSP_PAGE_TOP_DMS_START          :               0 *   
+   TBSP_PAGE_TOP_DMS_END            :               0 *   
+   TBSP_MAX_PAGE_TOP_DMS_START      :               0 *   
+   TBSP_MAX_PAGE_TOP_DMS_END        :               0 *   
+   ************************************************************************************** 
+   TBSP_PATHS_DROPPED               :               0 *   
+   POOL_QUEUED_ASYNC_DATA_REQS      :               0 *                .00 
+   POOL_QUEUED_ASYNC_INDEX_REQS     :               0 *                .00 
+   POOL_QUEUED_ASYNC_XDA_REQS       :               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_DATA_REQS :               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_INDEX_REQS:               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_XDA_REQS  :               0 *                .00 
+   POOL_QUEUED_ASYNC_OTHER_REQS     :               1 *                .01 
+   POOL_QUEUED_ASYNC_DATA_PAGES     :               0 *                .00 
+   POOL_QUEUED_ASYNC_INDEX_PAGES    :               0 *                .00 
+   POOL_QUEUED_ASYNC_XDA_PAGES    :               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_DATA_PAGES:               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_INDEX_PAGES:               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_XDA_PAGES  :               0 *                .00 
+   ************************************************************************************** 
+   POOL_FAILED_ASYNC_DATA_REQS       :               0 *                .00 
+   POOL_FAILED_ASYNC_INDEX_REQS      :               0 *                .00 
+   POOL_FAILED_ASYNC_XDA_REQS        :               0 *                .00 
+   POOL_FAILED_ASYNC_TEMP_DATA_REQS  :               0 *                .00 
+   POOL_FAILED_ASYNC_TEMP_INDEX_REQS :               0 *                .00 
+   POOL_FAILED_ASYNC_TEMP_XDA_REQS   :               0 *                .00 
+   POOL_FAILED_ASYNC_OTHER_REQS      :               0 *                .00 
+   ************************************************************************************** 
+   SKIPPED_PREFETCH_DATA_P_READS          :               0 *                .00 
+   SKIPPED_PREFETCH_INDEX_P_READS         :               0 *                .00 
+   SKIPPED_PREFETCH_XDA_P_READS           :               0 *                .00 
+   SKIPPED_PREFETCH_TEMP_DATA_P_READS     :               0 *                .00 
+   SKIPPED_PREFETCH_TEMP_INDEX_P_READS    :               0 *                .00 
+   SKIPPED_PREFETCH_TEMP_XDA_P_READS      :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_DATA_P_READS      :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_INDEX_P_READS     :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_XDA_P_READS       :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_TEMP_DATA_P_READS :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_TEMP_INDEX_P_READS:               0 *                .00 
+   SKIPPED_PREFETCH_UOW_TEMP_XDA_P_READS  :               0 *                .00 
+   ************************************************************************************** 
+   **************************************************************************************
+
+ TBSP_NAME                     : USERSPACE1                     
+ TBSPID                        :            2 
+ MEMBER                        :            0 
+  TBSP_TYPE                     : DMS        
+  TBSP_CONTENT_TYPE             : LARGE             
+  TBSP_STATE @Start             : NORMAL                         
+  TBSP_STATE @End               : NORMAL                         
+  TBSP_REBALANCER_MODE          : NO_REBAL                       
+  TBSP_PAGE_SIZE                :         8192 
+  TBSP_EXTENT_SIZE              :           32 
+  TBSP_PREFETCH_SIZE            :           32 
+  TBSP_USING_AUTO_STORAGE       :            1 
+  TBSP_AUTO_RESIZE_ENABLED      :            1 
+  RECLAIMABLE_SPACE_ENABLED     :               1 
+  STORAGE_GROUP_NAME            :     IBMSTOGROUP 
+  STORAGE_GROUP_ID              :               0 
+  AUTO_STORAGE_HYBRID           :               0 
+  TABLESPACE_MIN_RECOVERY_TIME  : -               
+  TBSP_TRACKMOD_STATE           :     UNAVAILABLE 
+  TBSP_DATATAG                  :               0 
+  ************************************************************************************** 
+  DIRECT_READS                  :               0 *               .00 
+  DIRECT_READ_REQS              :               0 *               .00 
+  DIRECT_READ_TIME_MSECS        :               0 *  
+  DIRECT_WRITE_TIME_MSECS       :               0 *  
+  DIRECT_WRITES                 :               0 *               .00 
+  DIRECT_WRITE_REQS             :               0 *               .00 
+  ************************************************************************************** 
+  POOL_DATA_L_READS             :            2379 *             39.65 
+  POOL_INDEX_L_READS            :              58 *                .96 
+   POOL_XDA_L_READS              :               0 *                .00 
+   ************************************************************************************** 
+   POOL_TEMP_DATA_L_READS        :               0 *                .00 
+   POOL_TEMP_INDEX_L_READS       :               0 *                .00 
+   POOL_TEMP_XDA_L_READS         :               0 *                .00 
+   ************************************************************************************** 
+   POOL_DATA_P_READS             :               0 *                .00 
+   POOL_INDEX_P_READS            :               0 *                .00 
+   POOL_XDA_P_READS              :               0 *                .00 
+   ************************************************************************************** 
+   POOL_TEMP_DATA_P_READS        :               0 *                .00 
+   POOL_TEMP_INDEX_P_READS       :               0 *                .00 
+   POOL_TEMP_XDA_P_READS         :               0 *                .00 
+   ************************************************************************************** 
+   POOL_DATA_WRITES              :               0 *                .00 
+   POOL_INDEX_WRITES             :               0 *                .00 
+   POOL_XDA_WRITES               :               0 *                .00 
+   ************************************************************************************** 
+   POOL_ASYNC_DATA_READS         :               0 *                .00 
+   POOL_ASYNC_DATA_READ_REQS     :               0 *                .00 
+   POOL_ASYNC_INDEX_READS        :               0 *                .00 
+   POOL_ASYNC_INDEX_READ_REQS    :               0 *                .00 
+   POOL_ASYNC_XDA_READS          :               0 *                .00 
+   POOL_ASYNC_XDA_READ_REQS        :               0 *                .00 
+   ************************************************************************************** 
+   POOL_ASYNC_DATA_WRITES        :               0 *                .00 
+   POOL_ASYNC_INDEX_WRITES       :               0 *                .00 
+   POOL_ASYNC_XDA_WRITES         :               0 *                .00 
+   POOL_READ_TIME_MSECS          :               0 *                .00 
+   POOL_WRITE_TIME_MSECS         :               0 *                .00 
+   ************************************************************************************** 
+   POOL_ASYNC_READ_TIME          :               0 *   
+   POOL_ASYNC_WRITE_TIME         :               0 *   
+   ************************************************************************************** 
+   VECTORED_IOS                  :               0 *                .00 
+   PAGES_FROM_VECTORED_IOS       :               0 *                .00 
+   BLOCK_IOS                     :               0 *                .00 
+   PAGES_FROM_BLOCK_IOS          :               0 *                .00 
+   UNREAD_PREFETCH_PAGES         :               0 *                .00 
+   PREFETCH_WAIT_TIME            :               0 *   
+   PREFETCH_WAITS                :               0 *                .00 
+   ************************************************************************************** 
+   FILES_CLOSED                  :               0 *                .00 
+   ************************************************************************************** 
+   TBSP_USED_PAGES_START            :          228832 *   
+   TBSP_USED_PAGES_END              :          228864 *   
+   TBSP_FREE_PAGES_DMS_START        :             512 *   
+   TBSP_FREE_PAGES_DMS_END          :             480 *   
+   TBSP_USABLE_PAGES_START          :          229344 *   
+   TBSP_USABLE_PAGES_END            :          229344 *   
+   TBSP_TOTAL_PAGES_START           :          229376 *   
+   TBSP_TOTAL_PAGES_END             :          229376 *   
+   TBSP_PENDING_FREE_PAGES_DMS_START:               0 *   
+   TBSP_PENDING_FREE_PAGES_DMS_END  :               0 *   
+   TBSP_PAGE_TOP_DMS_START          :          228832 *   
+   TBSP_PAGE_TOP_DMS_END            :          228864 *   
+   TBSP_MAX_PAGE_TOP_DMS_START      :          228832 *   
+   TBSP_MAX_PAGE_TOP_DMS_END        :          228864 *   
+   ************************************************************************************** 
+   TBSP_PATHS_DROPPED               :               0 *   
+   POOL_QUEUED_ASYNC_DATA_REQS      :             109 *               1.81 
+   POOL_QUEUED_ASYNC_INDEX_REQS     :               0 *                .00 
+   POOL_QUEUED_ASYNC_XDA_REQS       :               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_DATA_REQS :               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_INDEX_REQS:               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_XDA_REQS  :               0 *                .00 
+   POOL_QUEUED_ASYNC_OTHER_REQS     :               0 *                .00 
+   POOL_QUEUED_ASYNC_DATA_PAGES     :             109 *               1.81 
+   POOL_QUEUED_ASYNC_INDEX_PAGES    :          147298 *            2454.96 
+   POOL_QUEUED_ASYNC_XDA_PAGES    :               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_DATA_PAGES:               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_INDEX_PAGES:               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_XDA_PAGES  :               0 *                .00 
+   ************************************************************************************** 
+   POOL_FAILED_ASYNC_DATA_REQS       :               0 *                .00 
+   POOL_FAILED_ASYNC_INDEX_REQS      :               0 *                .00 
+   POOL_FAILED_ASYNC_XDA_REQS        :               0 *                .00 
+   POOL_FAILED_ASYNC_TEMP_DATA_REQS  :               0 *                .00 
+   POOL_FAILED_ASYNC_TEMP_INDEX_REQS :               0 *                .00 
+   POOL_FAILED_ASYNC_TEMP_XDA_REQS   :               0 *                .00 
+   POOL_FAILED_ASYNC_OTHER_REQS      :               0 *                .00 
+   ************************************************************************************** 
+   SKIPPED_PREFETCH_DATA_P_READS          :             109 *               1.81 
+   SKIPPED_PREFETCH_INDEX_P_READS         :               0 *                .00 
+   SKIPPED_PREFETCH_XDA_P_READS           :               0 *                .00 
+   SKIPPED_PREFETCH_TEMP_DATA_P_READS     :               0 *                .00 
+   SKIPPED_PREFETCH_TEMP_INDEX_P_READS    :               0 *                .00 
+   SKIPPED_PREFETCH_TEMP_XDA_P_READS      :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_DATA_P_READS      :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_INDEX_P_READS     :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_XDA_P_READS       :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_TEMP_DATA_P_READS :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_TEMP_INDEX_P_READS:               0 *                .00 
+   SKIPPED_PREFETCH_UOW_TEMP_XDA_P_READS  :               0 *                .00 
+   ************************************************************************************** 
+   **************************************************************************************
+
+ TBSP_NAME                     : TMP32K                         
+ TBSPID                        :            3 
+ MEMBER                        :            0 
+  TBSP_TYPE                     : SMS        
+  TBSP_CONTENT_TYPE             : SYSTEMP           
+  TBSP_STATE @Start             : NORMAL                         
+  TBSP_STATE @End               : NORMAL                         
+  TBSP_REBALANCER_MODE          : NO_REBAL                       
+  TBSP_PAGE_SIZE                :        32768 
+  TBSP_EXTENT_SIZE              :            8 
+  TBSP_PREFETCH_SIZE            :            8 
+  TBSP_USING_AUTO_STORAGE       :            0 
+  TBSP_AUTO_RESIZE_ENABLED      :            0 
+  RECLAIMABLE_SPACE_ENABLED     :               0 
+  STORAGE_GROUP_NAME            : -               
+  STORAGE_GROUP_ID              : -               
+  AUTO_STORAGE_HYBRID           :               0 
+  TABLESPACE_MIN_RECOVERY_TIME  : -               
+  TBSP_TRACKMOD_STATE           :     UNAVAILABLE 
+  TBSP_DATATAG                  :               0 
+  ************************************************************************************** 
+  DIRECT_READS                  :               0 *               .00 
+  DIRECT_READ_REQS              :               0 *               .00 
+  DIRECT_READ_TIME_MSECS        :               0 *  
+  DIRECT_WRITE_TIME_MSECS       :               0 *  
+  DIRECT_WRITES                 :               0 *               .00 
+  DIRECT_WRITE_REQS             :               0 *               .00 
+  ************************************************************************************** 
+  POOL_DATA_L_READS             :               0 *               .00 
+  POOL_INDEX_L_READS            :               0 *                .00 
+   POOL_XDA_L_READS              :               0 *                .00 
+   ************************************************************************************** 
+   POOL_TEMP_DATA_L_READS        :               0 *                .00 
+   POOL_TEMP_INDEX_L_READS       :               0 *                .00 
+   POOL_TEMP_XDA_L_READS         :               0 *                .00 
+   ************************************************************************************** 
+   POOL_DATA_P_READS             :               0 *                .00 
+   POOL_INDEX_P_READS            :               0 *                .00 
+   POOL_XDA_P_READS              :               0 *                .00 
+   ************************************************************************************** 
+   POOL_TEMP_DATA_P_READS        :               0 *                .00 
+   POOL_TEMP_INDEX_P_READS       :               0 *                .00 
+   POOL_TEMP_XDA_P_READS         :               0 *                .00 
+   ************************************************************************************** 
+   POOL_DATA_WRITES              :               0 *                .00 
+   POOL_INDEX_WRITES             :               0 *                .00 
+   POOL_XDA_WRITES               :               0 *                .00 
+   ************************************************************************************** 
+   POOL_ASYNC_DATA_READS         :               0 *                .00 
+   POOL_ASYNC_DATA_READ_REQS     :               0 *                .00 
+   POOL_ASYNC_INDEX_READS        :               0 *                .00 
+   POOL_ASYNC_INDEX_READ_REQS    :               0 *                .00 
+   POOL_ASYNC_XDA_READS          :               0 *                .00 
+   POOL_ASYNC_XDA_READ_REQS        :               0 *                .00 
+   ************************************************************************************** 
+   POOL_ASYNC_DATA_WRITES        :               0 *                .00 
+   POOL_ASYNC_INDEX_WRITES       :               0 *                .00 
+   POOL_ASYNC_XDA_WRITES         :               0 *                .00 
+   POOL_READ_TIME_MSECS          :               0 *                .00 
+   POOL_WRITE_TIME_MSECS         :               0 *                .00 
+   ************************************************************************************** 
+   POOL_ASYNC_READ_TIME          :               0 *   
+   POOL_ASYNC_WRITE_TIME         :               0 *   
+   ************************************************************************************** 
+   VECTORED_IOS                  :               0 *                .00 
+   PAGES_FROM_VECTORED_IOS       :               0 *                .00 
+   BLOCK_IOS                     :               0 *                .00 
+   PAGES_FROM_BLOCK_IOS          :               0 *                .00 
+   UNREAD_PREFETCH_PAGES         :               0 *                .00 
+   PREFETCH_WAIT_TIME            :               0 *   
+   PREFETCH_WAITS                :               0 *                .00 
+   ************************************************************************************** 
+   FILES_CLOSED                  :               0 *                .00 
+   ************************************************************************************** 
+   TBSP_USED_PAGES_START            :               1 *   
+   TBSP_USED_PAGES_END              :               1 *   
+   TBSP_FREE_PAGES_DMS_START        :               0 *   
+   TBSP_FREE_PAGES_DMS_END          :               0 *   
+   TBSP_USABLE_PAGES_START          :               1 *   
+   TBSP_USABLE_PAGES_END            :               1 *   
+   TBSP_TOTAL_PAGES_START           :               1 *   
+   TBSP_TOTAL_PAGES_END             :               1 *   
+   TBSP_PENDING_FREE_PAGES_DMS_START:               0 *   
+   TBSP_PENDING_FREE_PAGES_DMS_END  :               0 *   
+   TBSP_PAGE_TOP_DMS_START          :               0 *   
+   TBSP_PAGE_TOP_DMS_END            :               0 *   
+   TBSP_MAX_PAGE_TOP_DMS_START      :               0 *   
+   TBSP_MAX_PAGE_TOP_DMS_END        :               0 *   
+   ************************************************************************************** 
+   TBSP_PATHS_DROPPED               :               0 *   
+   POOL_QUEUED_ASYNC_DATA_REQS      :               0 *                .00 
+   POOL_QUEUED_ASYNC_INDEX_REQS     :               0 *                .00 
+   POOL_QUEUED_ASYNC_XDA_REQS       :               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_DATA_REQS :               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_INDEX_REQS:               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_XDA_REQS  :               0 *                .00 
+   POOL_QUEUED_ASYNC_OTHER_REQS     :               0 *                .00 
+   POOL_QUEUED_ASYNC_DATA_PAGES     :               0 *                .00 
+   POOL_QUEUED_ASYNC_INDEX_PAGES    :               0 *                .00 
+   POOL_QUEUED_ASYNC_XDA_PAGES    :               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_DATA_PAGES:               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_INDEX_PAGES:               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_XDA_PAGES  :               0 *                .00 
+   ************************************************************************************** 
+   POOL_FAILED_ASYNC_DATA_REQS       :               0 *                .00 
+   POOL_FAILED_ASYNC_INDEX_REQS      :               0 *                .00 
+   POOL_FAILED_ASYNC_XDA_REQS        :               0 *                .00 
+   POOL_FAILED_ASYNC_TEMP_DATA_REQS  :               0 *                .00 
+   POOL_FAILED_ASYNC_TEMP_INDEX_REQS :               0 *                .00 
+   POOL_FAILED_ASYNC_TEMP_XDA_REQS   :               0 *                .00 
+   POOL_FAILED_ASYNC_OTHER_REQS      :               0 *                .00 
+   ************************************************************************************** 
+   SKIPPED_PREFETCH_DATA_P_READS          :               0 *                .00 
+   SKIPPED_PREFETCH_INDEX_P_READS         :               0 *                .00 
+   SKIPPED_PREFETCH_XDA_P_READS           :               0 *                .00 
+   SKIPPED_PREFETCH_TEMP_DATA_P_READS     :               0 *                .00 
+   SKIPPED_PREFETCH_TEMP_INDEX_P_READS    :               0 *                .00 
+   SKIPPED_PREFETCH_TEMP_XDA_P_READS      :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_DATA_P_READS      :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_INDEX_P_READS     :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_XDA_P_READS       :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_TEMP_DATA_P_READS :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_TEMP_INDEX_P_READS:               0 *                .00 
+   SKIPPED_PREFETCH_UOW_TEMP_XDA_P_READS  :               0 *                .00 
+   ************************************************************************************** 
+   **************************************************************************************
+
+ TBSP_NAME                     : SYSTOOLSPACE                   
+ TBSPID                        :            4 
+ MEMBER                        :            0 
+  TBSP_TYPE                     : DMS        
+  TBSP_CONTENT_TYPE             : LARGE             
+  TBSP_STATE @Start             : NORMAL                         
+  TBSP_STATE @End               : NORMAL                         
+  TBSP_REBALANCER_MODE          : NO_REBAL                       
+  TBSP_PAGE_SIZE                :         8192 
+  TBSP_EXTENT_SIZE              :            4 
+  TBSP_PREFETCH_SIZE            :            4 
+  TBSP_USING_AUTO_STORAGE       :            1 
+  TBSP_AUTO_RESIZE_ENABLED      :            1 
+  RECLAIMABLE_SPACE_ENABLED     :               1 
+  STORAGE_GROUP_NAME            :     IBMSTOGROUP 
+  STORAGE_GROUP_ID              :               0 
+  AUTO_STORAGE_HYBRID           :               0 
+  TABLESPACE_MIN_RECOVERY_TIME  : -               
+  TBSP_TRACKMOD_STATE           :     UNAVAILABLE 
+  TBSP_DATATAG                  :               0 
+  ************************************************************************************** 
+  DIRECT_READS                  :               0 *               .00 
+  DIRECT_READ_REQS              :               0 *               .00 
+  DIRECT_READ_TIME_MSECS        :               0 *  
+  DIRECT_WRITE_TIME_MSECS       :               0 *  
+  DIRECT_WRITES                 :               0 *               .00 
+  DIRECT_WRITE_REQS             :               0 *               .00 
+  ************************************************************************************** 
+  POOL_DATA_L_READS             :               0 *               .00 
+  POOL_INDEX_L_READS            :               0 *                .00 
+   POOL_XDA_L_READS              :               0 *                .00 
+   ************************************************************************************** 
+   POOL_TEMP_DATA_L_READS        :               0 *                .00 
+   POOL_TEMP_INDEX_L_READS       :               0 *                .00 
+   POOL_TEMP_XDA_L_READS         :               0 *                .00 
+   ************************************************************************************** 
+   POOL_DATA_P_READS             :               0 *                .00 
+   POOL_INDEX_P_READS            :               0 *                .00 
+   POOL_XDA_P_READS              :               0 *                .00 
+   ************************************************************************************** 
+   POOL_TEMP_DATA_P_READS        :               0 *                .00 
+   POOL_TEMP_INDEX_P_READS       :               0 *                .00 
+   POOL_TEMP_XDA_P_READS         :               0 *                .00 
+   ************************************************************************************** 
+   POOL_DATA_WRITES              :               0 *                .00 
+   POOL_INDEX_WRITES             :               0 *                .00 
+   POOL_XDA_WRITES               :               0 *                .00 
+   ************************************************************************************** 
+   POOL_ASYNC_DATA_READS         :               0 *                .00 
+   POOL_ASYNC_DATA_READ_REQS     :               0 *                .00 
+   POOL_ASYNC_INDEX_READS        :               0 *                .00 
+   POOL_ASYNC_INDEX_READ_REQS    :               0 *                .00 
+   POOL_ASYNC_XDA_READS          :               0 *                .00 
+   POOL_ASYNC_XDA_READ_REQS        :               0 *                .00 
+   ************************************************************************************** 
+   POOL_ASYNC_DATA_WRITES        :               0 *                .00 
+   POOL_ASYNC_INDEX_WRITES       :               0 *                .00 
+   POOL_ASYNC_XDA_WRITES         :               0 *                .00 
+   POOL_READ_TIME_MSECS          :               0 *                .00 
+   POOL_WRITE_TIME_MSECS         :               0 *                .00 
+   ************************************************************************************** 
+   POOL_ASYNC_READ_TIME          :               0 *   
+   POOL_ASYNC_WRITE_TIME         :               0 *   
+   ************************************************************************************** 
+   VECTORED_IOS                  :               0 *                .00 
+   PAGES_FROM_VECTORED_IOS       :               0 *                .00 
+   BLOCK_IOS                     :               0 *                .00 
+   PAGES_FROM_BLOCK_IOS          :               0 *                .00 
+   UNREAD_PREFETCH_PAGES         :               0 *                .00 
+   PREFETCH_WAIT_TIME            :               0 *   
+   PREFETCH_WAITS                :               0 *                .00 
+   ************************************************************************************** 
+   FILES_CLOSED                  :               0 *                .00 
+   ************************************************************************************** 
+   TBSP_USED_PAGES_START            :             188 *   
+   TBSP_USED_PAGES_END              :             188 *   
+   TBSP_FREE_PAGES_DMS_START        :            3904 *   
+   TBSP_FREE_PAGES_DMS_END          :            3904 *   
+   TBSP_USABLE_PAGES_START          :            4092 *   
+   TBSP_USABLE_PAGES_END            :            4092 *   
+   TBSP_TOTAL_PAGES_START           :            4096 *   
+   TBSP_TOTAL_PAGES_END             :            4096 *   
+   TBSP_PENDING_FREE_PAGES_DMS_START:               0 *   
+   TBSP_PENDING_FREE_PAGES_DMS_END  :               0 *   
+   TBSP_PAGE_TOP_DMS_START          :             188 *   
+   TBSP_PAGE_TOP_DMS_END            :             188 *   
+   TBSP_MAX_PAGE_TOP_DMS_START      :             188 *   
+   TBSP_MAX_PAGE_TOP_DMS_END        :             188 *   
+   ************************************************************************************** 
+   TBSP_PATHS_DROPPED               :               0 *   
+   POOL_QUEUED_ASYNC_DATA_REQS      :               0 *                .00 
+   POOL_QUEUED_ASYNC_INDEX_REQS     :               0 *                .00 
+   POOL_QUEUED_ASYNC_XDA_REQS       :               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_DATA_REQS :               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_INDEX_REQS:               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_XDA_REQS  :               0 *                .00 
+   POOL_QUEUED_ASYNC_OTHER_REQS     :               0 *                .00 
+   POOL_QUEUED_ASYNC_DATA_PAGES     :               0 *                .00 
+   POOL_QUEUED_ASYNC_INDEX_PAGES    :               0 *                .00 
+   POOL_QUEUED_ASYNC_XDA_PAGES    :               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_DATA_PAGES:               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_INDEX_PAGES:               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_XDA_PAGES  :               0 *                .00 
+   ************************************************************************************** 
+   POOL_FAILED_ASYNC_DATA_REQS       :               0 *                .00 
+   POOL_FAILED_ASYNC_INDEX_REQS      :               0 *                .00 
+   POOL_FAILED_ASYNC_XDA_REQS        :               0 *                .00 
+   POOL_FAILED_ASYNC_TEMP_DATA_REQS  :               0 *                .00 
+   POOL_FAILED_ASYNC_TEMP_INDEX_REQS :               0 *                .00 
+   POOL_FAILED_ASYNC_TEMP_XDA_REQS   :               0 *                .00 
+   POOL_FAILED_ASYNC_OTHER_REQS      :               0 *                .00 
+   ************************************************************************************** 
+   SKIPPED_PREFETCH_DATA_P_READS          :               0 *                .00 
+   SKIPPED_PREFETCH_INDEX_P_READS         :               0 *                .00 
+   SKIPPED_PREFETCH_XDA_P_READS           :               0 *                .00 
+   SKIPPED_PREFETCH_TEMP_DATA_P_READS     :               0 *                .00 
+   SKIPPED_PREFETCH_TEMP_INDEX_P_READS    :               0 *                .00 
+   SKIPPED_PREFETCH_TEMP_XDA_P_READS      :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_DATA_P_READS      :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_INDEX_P_READS     :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_XDA_P_READS       :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_TEMP_DATA_P_READS :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_TEMP_INDEX_P_READS:               0 *                .00 
+   SKIPPED_PREFETCH_UOW_TEMP_XDA_P_READS  :               0 *                .00 
+   ************************************************************************************** 
+   **************************************************************************************
+
+ TBSP_NAME                     : SYSTOOLSTMPSPACE               
+ TBSPID                        :            5 
+ MEMBER                        :            0 
+  TBSP_TYPE                     : SMS        
+  TBSP_CONTENT_TYPE             : USRTEMP           
+  TBSP_STATE @Start             : NORMAL                         
+  TBSP_STATE @End               : NORMAL                         
+  TBSP_REBALANCER_MODE          : NO_REBAL                       
+  TBSP_PAGE_SIZE                :         8192 
+  TBSP_EXTENT_SIZE              :            4 
+  TBSP_PREFETCH_SIZE            :            4 
+  TBSP_USING_AUTO_STORAGE       :            1 
+  TBSP_AUTO_RESIZE_ENABLED      :            0 
+  RECLAIMABLE_SPACE_ENABLED     :               0 
+  STORAGE_GROUP_NAME            :     IBMSTOGROUP 
+  STORAGE_GROUP_ID              :               0 
+  AUTO_STORAGE_HYBRID           :               0 
+  TABLESPACE_MIN_RECOVERY_TIME  : -               
+  TBSP_TRACKMOD_STATE           :     UNAVAILABLE 
+  TBSP_DATATAG                  :               0 
+  ************************************************************************************** 
+  DIRECT_READS                  :               0 *               .00 
+  DIRECT_READ_REQS              :               0 *               .00 
+  DIRECT_READ_TIME_MSECS        :               0 *  
+  DIRECT_WRITE_TIME_MSECS       :               0 *  
+  DIRECT_WRITES                 :               0 *               .00 
+  DIRECT_WRITE_REQS             :               0 *               .00 
+  ************************************************************************************** 
+  POOL_DATA_L_READS             :               0 *               .00 
+  POOL_INDEX_L_READS            :               0 *                .00 
+   POOL_XDA_L_READS              :               0 *                .00 
+   ************************************************************************************** 
+   POOL_TEMP_DATA_L_READS        :               0 *                .00 
+   POOL_TEMP_INDEX_L_READS       :               0 *                .00 
+   POOL_TEMP_XDA_L_READS         :               0 *                .00 
+   ************************************************************************************** 
+   POOL_DATA_P_READS             :               0 *                .00 
+   POOL_INDEX_P_READS            :               0 *                .00 
+   POOL_XDA_P_READS              :               0 *                .00 
+   ************************************************************************************** 
+   POOL_TEMP_DATA_P_READS        :               0 *                .00 
+   POOL_TEMP_INDEX_P_READS       :               0 *                .00 
+   POOL_TEMP_XDA_P_READS         :               0 *                .00 
+   ************************************************************************************** 
+   POOL_DATA_WRITES              :               0 *                .00 
+   POOL_INDEX_WRITES             :               0 *                .00 
+   POOL_XDA_WRITES               :               0 *                .00 
+   ************************************************************************************** 
+   POOL_ASYNC_DATA_READS         :               0 *                .00 
+   POOL_ASYNC_DATA_READ_REQS     :               0 *                .00 
+   POOL_ASYNC_INDEX_READS        :               0 *                .00 
+   POOL_ASYNC_INDEX_READ_REQS    :               0 *                .00 
+   POOL_ASYNC_XDA_READS          :               0 *                .00 
+   POOL_ASYNC_XDA_READ_REQS        :               0 *                .00 
+   ************************************************************************************** 
+   POOL_ASYNC_DATA_WRITES        :               0 *                .00 
+   POOL_ASYNC_INDEX_WRITES       :               0 *                .00 
+   POOL_ASYNC_XDA_WRITES         :               0 *                .00 
+   POOL_READ_TIME_MSECS          :               0 *                .00 
+   POOL_WRITE_TIME_MSECS         :               0 *                .00 
+   ************************************************************************************** 
+   POOL_ASYNC_READ_TIME          :               0 *   
+   POOL_ASYNC_WRITE_TIME         :               0 *   
+   ************************************************************************************** 
+   VECTORED_IOS                  :               0 *                .00 
+   PAGES_FROM_VECTORED_IOS       :               0 *                .00 
+   BLOCK_IOS                     :               0 *                .00 
+   PAGES_FROM_BLOCK_IOS          :               0 *                .00 
+   UNREAD_PREFETCH_PAGES         :               0 *                .00 
+   PREFETCH_WAIT_TIME            :               0 *   
+   PREFETCH_WAITS                :               0 *                .00 
+   ************************************************************************************** 
+   FILES_CLOSED                  :               0 *                .00 
+   ************************************************************************************** 
+   TBSP_USED_PAGES_START            :               1 *   
+   TBSP_USED_PAGES_END              :               1 *   
+   TBSP_FREE_PAGES_DMS_START        :               0 *   
+   TBSP_FREE_PAGES_DMS_END          :               0 *   
+   TBSP_USABLE_PAGES_START          :               1 *   
+   TBSP_USABLE_PAGES_END            :               1 *   
+   TBSP_TOTAL_PAGES_START           :               1 *   
+   TBSP_TOTAL_PAGES_END             :               1 *   
+   TBSP_PENDING_FREE_PAGES_DMS_START:               0 *   
+   TBSP_PENDING_FREE_PAGES_DMS_END  :               0 *   
+   TBSP_PAGE_TOP_DMS_START          :               0 *   
+   TBSP_PAGE_TOP_DMS_END            :               0 *   
+   TBSP_MAX_PAGE_TOP_DMS_START      :               0 *   
+   TBSP_MAX_PAGE_TOP_DMS_END        :               0 *   
+   ************************************************************************************** 
+   TBSP_PATHS_DROPPED               :               0 *   
+   POOL_QUEUED_ASYNC_DATA_REQS      :               0 *                .00 
+   POOL_QUEUED_ASYNC_INDEX_REQS     :               0 *                .00 
+   POOL_QUEUED_ASYNC_XDA_REQS       :               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_DATA_REQS :               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_INDEX_REQS:               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_XDA_REQS  :               0 *                .00 
+   POOL_QUEUED_ASYNC_OTHER_REQS     :               0 *                .00 
+   POOL_QUEUED_ASYNC_DATA_PAGES     :               0 *                .00 
+   POOL_QUEUED_ASYNC_INDEX_PAGES    :               0 *                .00 
+   POOL_QUEUED_ASYNC_XDA_PAGES    :               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_DATA_PAGES:               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_INDEX_PAGES:               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_XDA_PAGES  :               0 *                .00 
+   ************************************************************************************** 
+   POOL_FAILED_ASYNC_DATA_REQS       :               0 *                .00 
+   POOL_FAILED_ASYNC_INDEX_REQS      :               0 *                .00 
+   POOL_FAILED_ASYNC_XDA_REQS        :               0 *                .00 
+   POOL_FAILED_ASYNC_TEMP_DATA_REQS  :               0 *                .00 
+   POOL_FAILED_ASYNC_TEMP_INDEX_REQS :               0 *                .00 
+   POOL_FAILED_ASYNC_TEMP_XDA_REQS   :               0 *                .00 
+   POOL_FAILED_ASYNC_OTHER_REQS      :               0 *                .00 
+   ************************************************************************************** 
+   SKIPPED_PREFETCH_DATA_P_READS          :               0 *                .00 
+   SKIPPED_PREFETCH_INDEX_P_READS         :               0 *                .00 
+   SKIPPED_PREFETCH_XDA_P_READS           :               0 *                .00 
+   SKIPPED_PREFETCH_TEMP_DATA_P_READS     :               0 *                .00 
+   SKIPPED_PREFETCH_TEMP_INDEX_P_READS    :               0 *                .00 
+   SKIPPED_PREFETCH_TEMP_XDA_P_READS      :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_DATA_P_READS      :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_INDEX_P_READS     :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_XDA_P_READS       :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_TEMP_DATA_P_READS :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_TEMP_INDEX_P_READS:               0 *                .00 
+   SKIPPED_PREFETCH_UOW_TEMP_XDA_P_READS  :               0 *                .00 
+   ************************************************************************************** 
+   **************************************************************************************
+
+ TBSP_NAME                     : LARGETBSPACE1                  
+ TBSPID                        :            6 
+ MEMBER                        :            0 
+  TBSP_TYPE                     : DMS        
+  TBSP_CONTENT_TYPE             : LARGE             
+  TBSP_STATE @Start             : NORMAL                         
+  TBSP_STATE @End               : NORMAL                         
+  TBSP_REBALANCER_MODE          : NO_REBAL                       
+  TBSP_PAGE_SIZE                :        32768 
+  TBSP_EXTENT_SIZE              :           32 
+  TBSP_PREFETCH_SIZE            :           32 
+  TBSP_USING_AUTO_STORAGE       :            1 
+  TBSP_AUTO_RESIZE_ENABLED      :            1 
+  RECLAIMABLE_SPACE_ENABLED     :               1 
+  STORAGE_GROUP_NAME            :     IBMSTOGROUP 
+  STORAGE_GROUP_ID              :               0 
+  AUTO_STORAGE_HYBRID           :               0 
+  TABLESPACE_MIN_RECOVERY_TIME  : -               
+  TBSP_TRACKMOD_STATE           :     UNAVAILABLE 
+  TBSP_DATATAG                  :               0 
+  ************************************************************************************** 
+  DIRECT_READS                  :               0 *               .00 
+  DIRECT_READ_REQS              :               0 *               .00 
+  DIRECT_READ_TIME_MSECS        :               0 *  
+  DIRECT_WRITE_TIME_MSECS       :               0 *  
+  DIRECT_WRITES                 :               0 *               .00 
+  DIRECT_WRITE_REQS             :               0 *               .00 
+  ************************************************************************************** 
+  POOL_DATA_L_READS             :               0 *               .00 
+  POOL_INDEX_L_READS            :              84 *               1.40 
+   POOL_XDA_L_READS              :               0 *                .00 
+   ************************************************************************************** 
+   POOL_TEMP_DATA_L_READS        :               0 *                .00 
+   POOL_TEMP_INDEX_L_READS       :               0 *                .00 
+   POOL_TEMP_XDA_L_READS         :               0 *                .00 
+   ************************************************************************************** 
+   POOL_DATA_P_READS             :               0 *                .00 
+   POOL_INDEX_P_READS            :               0 *                .00 
+   POOL_XDA_P_READS              :               0 *                .00 
+   ************************************************************************************** 
+   POOL_TEMP_DATA_P_READS        :               0 *                .00 
+   POOL_TEMP_INDEX_P_READS       :               0 *                .00 
+   POOL_TEMP_XDA_P_READS         :               0 *                .00 
+   ************************************************************************************** 
+   POOL_DATA_WRITES              :               0 *                .00 
+   POOL_INDEX_WRITES             :               0 *                .00 
+   POOL_XDA_WRITES               :               0 *                .00 
+   ************************************************************************************** 
+   POOL_ASYNC_DATA_READS         :               0 *                .00 
+   POOL_ASYNC_DATA_READ_REQS     :               0 *                .00 
+   POOL_ASYNC_INDEX_READS        :               0 *                .00 
+   POOL_ASYNC_INDEX_READ_REQS    :               0 *                .00 
+   POOL_ASYNC_XDA_READS          :               0 *                .00 
+   POOL_ASYNC_XDA_READ_REQS        :               0 *                .00 
+   ************************************************************************************** 
+   POOL_ASYNC_DATA_WRITES        :               0 *                .00 
+   POOL_ASYNC_INDEX_WRITES       :               0 *                .00 
+   POOL_ASYNC_XDA_WRITES         :               0 *                .00 
+   POOL_READ_TIME_MSECS          :               0 *                .00 
+   POOL_WRITE_TIME_MSECS         :               0 *                .00 
+   ************************************************************************************** 
+   POOL_ASYNC_READ_TIME          :               0 *   
+   POOL_ASYNC_WRITE_TIME         :               0 *   
+   ************************************************************************************** 
+   VECTORED_IOS                  :               0 *                .00 
+   PAGES_FROM_VECTORED_IOS       :               0 *                .00 
+   BLOCK_IOS                     :               0 *                .00 
+   PAGES_FROM_BLOCK_IOS          :               0 *                .00 
+   UNREAD_PREFETCH_PAGES         :               0 *                .00 
+   PREFETCH_WAIT_TIME            :               0 *   
+   PREFETCH_WAITS                :               0 *                .00 
+   ************************************************************************************** 
+   FILES_CLOSED                  :               0 *                .00 
+   ************************************************************************************** 
+   TBSP_USED_PAGES_START            :             864 *   
+   TBSP_USED_PAGES_END              :             864 *   
+   TBSP_FREE_PAGES_DMS_START        :              64 *   
+   TBSP_FREE_PAGES_DMS_END          :              64 *   
+   TBSP_USABLE_PAGES_START          :             992 *   
+   TBSP_USABLE_PAGES_END            :             992 *   
+   TBSP_TOTAL_PAGES_START           :            1024 *   
+   TBSP_TOTAL_PAGES_END             :            1024 *   
+   TBSP_PENDING_FREE_PAGES_DMS_START:              64 *   
+   TBSP_PENDING_FREE_PAGES_DMS_END  :              64 *   
+   TBSP_PAGE_TOP_DMS_START          :             928 *   
+   TBSP_PAGE_TOP_DMS_END            :             928 *   
+   TBSP_MAX_PAGE_TOP_DMS_START      :             928 *   
+   TBSP_MAX_PAGE_TOP_DMS_END        :             928 *   
+   ************************************************************************************** 
+   TBSP_PATHS_DROPPED               :               0 *   
+   POOL_QUEUED_ASYNC_DATA_REQS      :               0 *                .00 
+   POOL_QUEUED_ASYNC_INDEX_REQS     :               0 *                .00 
+   POOL_QUEUED_ASYNC_XDA_REQS       :               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_DATA_REQS :               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_INDEX_REQS:               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_XDA_REQS  :               0 *                .00 
+   POOL_QUEUED_ASYNC_OTHER_REQS     :               0 *                .00 
+   POOL_QUEUED_ASYNC_DATA_PAGES     :               0 *                .00 
+   POOL_QUEUED_ASYNC_INDEX_PAGES    :               0 *                .00 
+   POOL_QUEUED_ASYNC_XDA_PAGES    :               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_DATA_PAGES:               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_INDEX_PAGES:               0 *                .00 
+   POOL_QUEUED_ASYNC_TEMP_XDA_PAGES  :               0 *                .00 
+   ************************************************************************************** 
+   POOL_FAILED_ASYNC_DATA_REQS       :               0 *                .00 
+   POOL_FAILED_ASYNC_INDEX_REQS      :               0 *                .00 
+   POOL_FAILED_ASYNC_XDA_REQS        :               0 *                .00 
+   POOL_FAILED_ASYNC_TEMP_DATA_REQS  :               0 *                .00 
+   POOL_FAILED_ASYNC_TEMP_INDEX_REQS :               0 *                .00 
+   POOL_FAILED_ASYNC_TEMP_XDA_REQS   :               0 *                .00 
+   POOL_FAILED_ASYNC_OTHER_REQS      :               0 *                .00 
+   ************************************************************************************** 
+   SKIPPED_PREFETCH_DATA_P_READS          :               0 *                .00 
+   SKIPPED_PREFETCH_INDEX_P_READS         :               0 *                .00 
+   SKIPPED_PREFETCH_XDA_P_READS           :               0 *                .00 
+   SKIPPED_PREFETCH_TEMP_DATA_P_READS     :               0 *                .00 
+   SKIPPED_PREFETCH_TEMP_INDEX_P_READS    :               0 *                .00 
+   SKIPPED_PREFETCH_TEMP_XDA_P_READS      :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_DATA_P_READS      :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_INDEX_P_READS     :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_XDA_P_READS       :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_TEMP_DATA_P_READS :               0 *                .00 
+   SKIPPED_PREFETCH_UOW_TEMP_INDEX_P_READS:               0 *                .00 
+   SKIPPED_PREFETCH_UOW_TEMP_XDA_P_READS  :               0 *                .00 
+   ************************************************************************************** 
+   **************************************************************************************
+
+*********************************************************************************************************
+********************************* INDEX DATA PERFORMANCE REPORT *****************************************
+*********************************************************************************************************
+* Capture START TIME: 2018-08-10-11.53.47.057817 
+* Capture END TIME  : 2018-08-10-11.54.47.297424 
+* DURATION:   0 Days,  0 Hours,  1  Mins,  0  Secs,  239607 USecs 
+* Capture TOTAL DURATION SECS  :    60
+
+******************** TOP 20  INDEX NLEAF COUNTS ***********************
+SCHEMA       TABLE                               INDNAME                             IDXPAGECOUNTS IID    MEMBER PTN
+------------ ----------------------------------- ----------------------------------- ------------- ------ ------ ---
+WIH          PROPERTY                            PROPERTY_ASSETID_IDX01                      10319      5      0 -  
+WIH          PROPERTY                            PROPERTY_CLUSTER_IDX                         6447      2      0 -  
+WIH          MEASUREMENT_THRESHOLD               MEASUREMENT_THRESHOLD_RANGE_IDX              4122      1      0 -  
+WIH          PROPERTY                            PROPERTY_ID_IDX01                            3777      4      0 -  
+WIH          PROPERTY                            PROPERTY_ID_TYPE_IDX01                       3777      3      0 -  
+WIH          MEASUREMENT_ALIAS                   ALIAS_LOOKUP_PK                              3344      2      0 -  
+WIH          PROPERTY                            PROPERTY_ASSET_PROPERTY_ID_IDX01             2985      1      0 -  
+WIH          MEASUREMENT                         MEASUREMENT_ID_IDX                           2683      1      0 -  
+WIH          ASSET_INST                          ASSET_INST_MODEL_ID_ID_START_TIME_U          2621      5      0 -  
+WIH          MEASUREMENT_THRESHOLD               MEAS_THRESHOLD_UN                            2444      3      0 -  
+SYSIBM       SYSCOLDIST                          INDCOLDIST01                                 2394      1      0 -  
+WIH          ESRI_WSYSTEMVALVE_ASSET_LOCATION    ESRI_WSYSTEMVALVE_ASSET_INST_LOCATI          2143      3      0 -  
+WIH          ASSET_INST                          ASSET_INST_ID_IDX                            2125      2      0 -  
+WIH          MEASUREMENT                         MEASUREMENT_ASSET_ID_ID_UN                   1595      2      0 -  
+WIH          MEASUREMENT_ALIAS                   MEASUREMENT_ALIAS_MEAS_ID_ALIAS_IDX          1539      1      0 -  
+WIH          MEASUREMENT_THRESHOLD               MEASUREMENT_THRESHOLD_PK                     1112      2      0 -  
+WIH          ADAPTER_RULE_BINDING                ADAPTER_RULE_BINDING_PK                      1017      1      0 -  
+WIH          ASSET_INST                          ASSET_INST_TYPE_ID_IDX                        861      4      0 -  
+WIH          READING                             READING_POINT_IN_TIME_QUERY_IDX               718      2      0 -  
+WIH          ESRI_WSYSTEMVALVE_ASSET_LOCATION    ESRI_WSYSTEMVALVE_ASSET_LOCATION_PK           619      2      0 -  
+
+******************** TOP 20  INDEX NLEVELS COUNTS ***********************
+SCHEMA       TABLE                               INDNAME                             IDXLEVELCOUNTS IID    MEMBER PTN
+------------ ----------------------------------- ----------------------------------- -------------- ------ ------ ---
+SYSIBM       SYSCOLUMNS                          INDCOLUMNS01                                    3       1      0 -  
+WIH          MEASUREMENT_THRESHOLD               MEASUREMENT_THRESHOLD_PK                        3       2      0 -  
+WIH          MEASUREMENT_THRESHOLD               MEAS_THRESHOLD_UN                               3       3      0 -  
+WIH          MEASUREMENT_ALIAS                   MEASUREMENT_ALIAS_MEAS_ID_ALIAS_IDX             3       1      0 -  
+WIH          MEASUREMENT_ALIAS                   ALIAS_LOOKUP_PK                                 3       2      0 -  
+WIH          MEASUREMENT                         MEASUREMENT_ID_IDX                              3       1      0 -  
+WIH          MEASUREMENT                         MEASUREMENT_ASSET_ID_ID_UN                      3       2      0 -  
+WIH          MEASUREMENT                         MEASUREMENT_ASSET_ID_IDX                        3       4      0 -  
+WIH          ASSET_INST                          ASSET_INST_ID_IDX                               3       2      0 -  
+WIH          ASSET_INST                          ASSET_INST_NAME_IDX                             3       3      0 -  
+WIH          ASSET_INST                          ASSET_INST_TYPE_ID_IDX                          3       4      0 -  
+WIH          ASSET_INST                          ASSET_INST_MODEL_ID_ID_START_TIME_U             3       5      0 -  
+CFG          PAGE_CONFIG                         PAGE_CONFIG_PK                                  3       1      0 -  
+CFG          I18N_RESOURCE                       I18N_RESOURCE_KEY_IDX                           3       2      0 -  
+CFG          I18N_RESOURCE                       I18N_RESOURCE_LOCALE_IDX                        3       3      0 -  
+WIH          ESRI_WSYSTEMVALVE_ASSET_LOCATION    ESRI_WSYSTEMVALVE_ASSET_LOCATION_PK             3       2      0 -  
+WIH          ESRI_WSYSTEMVALVE_ASSET_LOCATION    ESRI_WSYSTEMVALVE_ASSET_INST_LOCATI             3       3      0 -  
+SYSIBM       SYSDEPENDENCIES                     INDDEPENDENCIES01                               3       1      0 -  
+SYSIBM       SYSCOLDIST                          INDCOLDIST01                                    3       1      0 -  
+SYSIBM       SYSROUTINEPARMS                     INDROUTINEPARMS06                               3       6      0 -  
+
+*********************************** TOP 20 INDEX SCANS **************************************
+SCHEMA       TABLE                               INDNAME                             INDEX_SCANS                /Sec IID    MEMBER PTN
+------------ ----------------------------------- ----------------------------------- -------------------- ---------- ------ ------ ---
+SYSIBM       SYSDATATYPES                        INDDATATYPES02                                      1069         17      2      0 -  
+SYSIBM       SYSROUTINES                         INDROUTINES06                                        432          7      6      0 -  
+SYSIBM       SYSROUTINES                         INDROUTINES02                                        432          7      2      0 -  
+SYSIBM       SYSDATATYPES                        INDDATATYPES01                                       123          2      1      0 -  
+SYSIBM       SYSROUTINES                         INDROUTINES05                                         95          1      5      0 -  
+EAM          WORK_ORDER                          SQL180808224223110                                    74          1      1      0 -  
+VDS          SRC_EVENTS_MT                       SRC_EVENTS_MT_IX1                                     36          0      2      0 -  
+SYSIBM       SYSTABLES                           INDTABLES01                                           22          0      1      0 -  
+VDS          SRC_EVENTS_MT                       SRC_EVENTS_MT_ASSET_ID_IDX                            18          0      4      0 -  
+EAM          SERVICE_ORDER                       SERVICE_ORDER_EAM_ID_IDX                               5          0      3      0 -  
+VDS          INTERFACES_RESULTS                  INTERFACES_RESULTS_SUCCESS_IDX                         3          0      4      0 -  
+EAM          WORK_ORDER                          WORK_ORDER_UPDATEDATE_IDX                              2          0      4      0 -  
+EAM          WORK_ORDER                          WORK_ORDER_EAM_ID_IDX                                  2          0      3      0 -  
+EAM          SERVICE_ORDER                       SQL180808224222960                                     1          0      1      0 -  
+CFG          SOLUTION_TASK                       SOLUTION_TASK_PK                                       1          0      1      0 -  
+SYSIBM       SYSTABLESPACES                      INDTABLESPACES02                                       0          0      2      0 -  
+WIH          PIPE_ASSET_LOCATION                 PIPE_ASSET_INST_LOCATION_IDX                           0          0      3      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          SQL180808233525660                                     0          0      1      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          PIPENETWORK_ASSET_LOCATION_PK                          0          0      2      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          PIPENETWORK_ASSET_INST_LOCATION_IDX                    0          0      3      0 -  
+
+******************** TOP 20 INDEX ONLY SCANS ***********************
+SCHEMA       TABLE                               INDNAME                             INDXONLYSCANS       /Sec IID    MEMBER PTN
+------------ ----------------------------------- ----------------------------------- ------------- ---------- ------ ------ ---
+VDS          INTERFACES_RESULTS                  INTERFACES_RESULTS_SUCCESS_IDX                  3          0      4      0 -  
+EAM          WORK_ORDER                          WORK_ORDER_UPDATEDATE_IDX                       2          0      4      0 -  
+EAM          SERVICE_ORDER                       SERVICE_ORDER_EAM_ID_IDX                        1          0      3      0 -  
+SYSIBM       SYSTABLESPACES                      INDTABLESPACES02                                0          0      2      0 -  
+WIH          WATERQUALITYMETER_ASSET_LOCATION    WATERQUALITYMETER_ASSET_INST_LOCATI             0          0      3      0 -  
+WIH          VALVE_ASSET_LOCATION                SQL180808233526650                              0          0      1      0 -  
+WIH          VALVE_ASSET_LOCATION                VALVE_ASSET_LOCATION_PK                         0          0      2      0 -  
+WIH          VALVE_ASSET_LOCATION                VALVE_ASSET_INST_LOCATION_IDX                   0          0      3      0 -  
+WIH          JUNCTION_ASSET_LOCATION             SQL180808233526430                              0          0      1      0 -  
+WIH          JUNCTION_ASSET_LOCATION             JUNCTION_ASSET_LOCATION_PK                      0          0      2      0 -  
+WIH          JUNCTION_ASSET_LOCATION             JUNCTION_ASSET_INST_LOCATION_IDX                0          0      3      0 -  
+WIH          TANK_ASSET_LOCATION                 SQL180808233526140                              0          0      1      0 -  
+WIH          TANK_ASSET_LOCATION                 TANK_ASSET_LOCATION_PK                          0          0      2      0 -  
+WIH          TANK_ASSET_LOCATION                 TANK_ASSET_INST_LOCATION_IDX                    0          0      3      0 -  
+WIH          PIPE_ASSET_LOCATION                 SQL180808233525900                              0          0      1      0 -  
+WIH          PIPE_ASSET_LOCATION                 PIPE_ASSET_LOCATION_PK                          0          0      2      0 -  
+WIH          PIPE_ASSET_LOCATION                 PIPE_ASSET_INST_LOCATION_IDX                    0          0      3      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          SQL180808233525660                              0          0      1      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          PIPENETWORK_ASSET_LOCATION_PK                   0          0      2      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          PIPENETWORK_ASSET_INST_LOCATION_IDX             0          0      3      0 -  
+
+******************** TOP 20 INDEX KEY UPDATES ***********************
+SCHEMA       TABLE                               INDNAME                             KEY_UPDATES         /Sec IID    MEMBER PTN
+------------ ----------------------------------- ----------------------------------- ------------- ---------- ------ ------ ---
+SYSIBM       SYSTABLESPACES                      INDTABLESPACES02                                0          0      2      0 -  
+SYSIBM       SYSTABLES                           INDTABLES09                                     0          0      9      0 -  
+WIH          WATERQUALITYMETER_ASSET_LOCATION    SQL180808233526900                              0          0      1      0 -  
+WIH          WATERQUALITYMETER_ASSET_LOCATION    WATERQUALITYMETER_ASSET_LOCATION_PK             0          0      2      0 -  
+WIH          WATERQUALITYMETER_ASSET_LOCATION    WATERQUALITYMETER_ASSET_INST_LOCATI             0          0      3      0 -  
+WIH          VALVE_ASSET_LOCATION                SQL180808233526650                              0          0      1      0 -  
+WIH          VALVE_ASSET_LOCATION                VALVE_ASSET_LOCATION_PK                         0          0      2      0 -  
+WIH          VALVE_ASSET_LOCATION                VALVE_ASSET_INST_LOCATION_IDX                   0          0      3      0 -  
+WIH          JUNCTION_ASSET_LOCATION             SQL180808233526430                              0          0      1      0 -  
+WIH          JUNCTION_ASSET_LOCATION             JUNCTION_ASSET_LOCATION_PK                      0          0      2      0 -  
+WIH          JUNCTION_ASSET_LOCATION             JUNCTION_ASSET_INST_LOCATION_IDX                0          0      3      0 -  
+WIH          TANK_ASSET_LOCATION                 SQL180808233526140                              0          0      1      0 -  
+WIH          TANK_ASSET_LOCATION                 TANK_ASSET_LOCATION_PK                          0          0      2      0 -  
+WIH          TANK_ASSET_LOCATION                 TANK_ASSET_INST_LOCATION_IDX                    0          0      3      0 -  
+WIH          PIPE_ASSET_LOCATION                 SQL180808233525900                              0          0      1      0 -  
+WIH          PIPE_ASSET_LOCATION                 PIPE_ASSET_LOCATION_PK                          0          0      2      0 -  
+WIH          PIPE_ASSET_LOCATION                 PIPE_ASSET_INST_LOCATION_IDX                    0          0      3      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          SQL180808233525660                              0          0      1      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          PIPENETWORK_ASSET_LOCATION_PK                   0          0      2      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          PIPENETWORK_ASSET_INST_LOCATION_IDX             0          0      3      0 -  
+
+******************** TOP 20 INDEX KEY INCLUDE COLUMN UPDATES ***********************
+SCHEMA       TABLE                               INDNAME                             INCLUDECOLUPDATES      /Sec  IID    MEMBER PTN
+------------ ----------------------------------- ----------------------------------- ----------------- ---------- ------ ------ ---
+SYSIBM       SYSTABLESPACES                      INDTABLESPACES02                                    0          0      2      0 -  
+SYSIBM       SYSTABLES                           INDTABLES09                                         0          0      9      0 -  
+WIH          WATERQUALITYMETER_ASSET_LOCATION    SQL180808233526900                                  0          0      1      0 -  
+WIH          WATERQUALITYMETER_ASSET_LOCATION    WATERQUALITYMETER_ASSET_LOCATION_PK                 0          0      2      0 -  
+WIH          WATERQUALITYMETER_ASSET_LOCATION    WATERQUALITYMETER_ASSET_INST_LOCATI                 0          0      3      0 -  
+WIH          VALVE_ASSET_LOCATION                SQL180808233526650                                  0          0      1      0 -  
+WIH          VALVE_ASSET_LOCATION                VALVE_ASSET_LOCATION_PK                             0          0      2      0 -  
+WIH          VALVE_ASSET_LOCATION                VALVE_ASSET_INST_LOCATION_IDX                       0          0      3      0 -  
+WIH          JUNCTION_ASSET_LOCATION             SQL180808233526430                                  0          0      1      0 -  
+WIH          JUNCTION_ASSET_LOCATION             JUNCTION_ASSET_LOCATION_PK                          0          0      2      0 -  
+WIH          JUNCTION_ASSET_LOCATION             JUNCTION_ASSET_INST_LOCATION_IDX                    0          0      3      0 -  
+WIH          TANK_ASSET_LOCATION                 SQL180808233526140                                  0          0      1      0 -  
+WIH          TANK_ASSET_LOCATION                 TANK_ASSET_LOCATION_PK                              0          0      2      0 -  
+WIH          TANK_ASSET_LOCATION                 TANK_ASSET_INST_LOCATION_IDX                        0          0      3      0 -  
+WIH          PIPE_ASSET_LOCATION                 SQL180808233525900                                  0          0      1      0 -  
+WIH          PIPE_ASSET_LOCATION                 PIPE_ASSET_LOCATION_PK                              0          0      2      0 -  
+WIH          PIPE_ASSET_LOCATION                 PIPE_ASSET_INST_LOCATION_IDX                        0          0      3      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          SQL180808233525660                                  0          0      1      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          PIPENETWORK_ASSET_LOCATION_PK                       0          0      2      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          PIPENETWORK_ASSET_INST_LOCATION_IDX                 0          0      3      0 -  
+
+******************** TOP 20 INDEX PSEUDO DELETES ***********************
+SCHEMA       TABLE                               INDNAME                             PSEUDO_DELETES       /Sec IID    MEMBER PTN
+------------ ----------------------------------- ----------------------------------- -------------- ---------- ------ ------ ---
+SYSIBM       SYSTABLESPACES                      INDTABLESPACES02                                0           0      2      0 -  
+SYSIBM       SYSTABLES                           INDTABLES09                                     0           0      9      0 -  
+WIH          WATERQUALITYMETER_ASSET_LOCATION    SQL180808233526900                              0           0      1      0 -  
+WIH          WATERQUALITYMETER_ASSET_LOCATION    WATERQUALITYMETER_ASSET_LOCATION_PK             0           0      2      0 -  
+WIH          WATERQUALITYMETER_ASSET_LOCATION    WATERQUALITYMETER_ASSET_INST_LOCATI             0           0      3      0 -  
+WIH          VALVE_ASSET_LOCATION                SQL180808233526650                              0           0      1      0 -  
+WIH          VALVE_ASSET_LOCATION                VALVE_ASSET_LOCATION_PK                         0           0      2      0 -  
+WIH          VALVE_ASSET_LOCATION                VALVE_ASSET_INST_LOCATION_IDX                   0           0      3      0 -  
+WIH          JUNCTION_ASSET_LOCATION             SQL180808233526430                              0           0      1      0 -  
+WIH          JUNCTION_ASSET_LOCATION             JUNCTION_ASSET_LOCATION_PK                      0           0      2      0 -  
+WIH          JUNCTION_ASSET_LOCATION             JUNCTION_ASSET_INST_LOCATION_IDX                0           0      3      0 -  
+WIH          TANK_ASSET_LOCATION                 SQL180808233526140                              0           0      1      0 -  
+WIH          TANK_ASSET_LOCATION                 TANK_ASSET_LOCATION_PK                          0           0      2      0 -  
+WIH          TANK_ASSET_LOCATION                 TANK_ASSET_INST_LOCATION_IDX                    0           0      3      0 -  
+WIH          PIPE_ASSET_LOCATION                 SQL180808233525900                              0           0      1      0 -  
+WIH          PIPE_ASSET_LOCATION                 PIPE_ASSET_LOCATION_PK                          0           0      2      0 -  
+WIH          PIPE_ASSET_LOCATION                 PIPE_ASSET_INST_LOCATION_IDX                    0           0      3      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          SQL180808233525660                              0           0      1      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          PIPENETWORK_ASSET_LOCATION_PK                   0           0      2      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          PIPENETWORK_ASSET_INST_LOCATION_IDX             0           0      3      0 -  
+
+******************** TOP 20 INDEX PSEUDO DELETED KEYS CLEANED ***********************
+SCHEMA       TABLE                               INDNAME                             PSEUDO_DEL_KEYS_CLEANED   /Sec     IID    MEMBER PTN
+------------ ----------------------------------- ----------------------------------- ----------------------- ---------- ------ ------ ---
+SYSIBM       SYSTABLESPACES                      INDTABLESPACES02                                          0          0      2      0 -  
+SYSIBM       SYSTABLES                           INDTABLES09                                               0          0      9      0 -  
+WIH          WATERQUALITYMETER_ASSET_LOCATION    SQL180808233526900                                        0          0      1      0 -  
+WIH          WATERQUALITYMETER_ASSET_LOCATION    WATERQUALITYMETER_ASSET_LOCATION_PK                       0          0      2      0 -  
+WIH          WATERQUALITYMETER_ASSET_LOCATION    WATERQUALITYMETER_ASSET_INST_LOCATI                       0          0      3      0 -  
+WIH          VALVE_ASSET_LOCATION                SQL180808233526650                                        0          0      1      0 -  
+WIH          VALVE_ASSET_LOCATION                VALVE_ASSET_LOCATION_PK                                   0          0      2      0 -  
+WIH          VALVE_ASSET_LOCATION                VALVE_ASSET_INST_LOCATION_IDX                             0          0      3      0 -  
+WIH          JUNCTION_ASSET_LOCATION             SQL180808233526430                                        0          0      1      0 -  
+WIH          JUNCTION_ASSET_LOCATION             JUNCTION_ASSET_LOCATION_PK                                0          0      2      0 -  
+WIH          JUNCTION_ASSET_LOCATION             JUNCTION_ASSET_INST_LOCATION_IDX                          0          0      3      0 -  
+WIH          TANK_ASSET_LOCATION                 SQL180808233526140                                        0          0      1      0 -  
+WIH          TANK_ASSET_LOCATION                 TANK_ASSET_LOCATION_PK                                    0          0      2      0 -  
+WIH          TANK_ASSET_LOCATION                 TANK_ASSET_INST_LOCATION_IDX                              0          0      3      0 -  
+WIH          PIPE_ASSET_LOCATION                 SQL180808233525900                                        0          0      1      0 -  
+WIH          PIPE_ASSET_LOCATION                 PIPE_ASSET_LOCATION_PK                                    0          0      2      0 -  
+WIH          PIPE_ASSET_LOCATION                 PIPE_ASSET_INST_LOCATION_IDX                              0          0      3      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          SQL180808233525660                                        0          0      1      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          PIPENETWORK_ASSET_LOCATION_PK                             0          0      2      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          PIPENETWORK_ASSET_INST_LOCATION_IDX                       0          0      3      0 -  
+
+******************** TOP 20 INDEX PAGE ALLOCATIONS ***********************
+SCHEMA       TABLE                               INDNAME                             PAGE_ALLOCATIONS   /Sec     IID    MEMBER PTN
+------------ ----------------------------------- ----------------------------------- ---------------- ---------- ------ ------ ---
+SYSIBM       SYSTABLESPACES                      INDTABLESPACES02                                   0          0      2      0 -  
+SYSIBM       SYSTABLES                           INDTABLES09                                        0          0      9      0 -  
+WIH          WATERQUALITYMETER_ASSET_LOCATION    SQL180808233526900                                 0          0      1      0 -  
+WIH          WATERQUALITYMETER_ASSET_LOCATION    WATERQUALITYMETER_ASSET_LOCATION_PK                0          0      2      0 -  
+WIH          WATERQUALITYMETER_ASSET_LOCATION    WATERQUALITYMETER_ASSET_INST_LOCATI                0          0      3      0 -  
+WIH          VALVE_ASSET_LOCATION                SQL180808233526650                                 0          0      1      0 -  
+WIH          VALVE_ASSET_LOCATION                VALVE_ASSET_LOCATION_PK                            0          0      2      0 -  
+WIH          VALVE_ASSET_LOCATION                VALVE_ASSET_INST_LOCATION_IDX                      0          0      3      0 -  
+WIH          JUNCTION_ASSET_LOCATION             SQL180808233526430                                 0          0      1      0 -  
+WIH          JUNCTION_ASSET_LOCATION             JUNCTION_ASSET_LOCATION_PK                         0          0      2      0 -  
+WIH          JUNCTION_ASSET_LOCATION             JUNCTION_ASSET_INST_LOCATION_IDX                   0          0      3      0 -  
+WIH          TANK_ASSET_LOCATION                 SQL180808233526140                                 0          0      1      0 -  
+WIH          TANK_ASSET_LOCATION                 TANK_ASSET_LOCATION_PK                             0          0      2      0 -  
+WIH          TANK_ASSET_LOCATION                 TANK_ASSET_INST_LOCATION_IDX                       0          0      3      0 -  
+WIH          PIPE_ASSET_LOCATION                 SQL180808233525900                                 0          0      1      0 -  
+WIH          PIPE_ASSET_LOCATION                 PIPE_ASSET_LOCATION_PK                             0          0      2      0 -  
+WIH          PIPE_ASSET_LOCATION                 PIPE_ASSET_INST_LOCATION_IDX                       0          0      3      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          SQL180808233525660                                 0          0      1      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          PIPENETWORK_ASSET_LOCATION_PK                      0          0      2      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          PIPENETWORK_ASSET_INST_LOCATION_IDX                0          0      3      0 -  
+
+******************** TOP 20 INDEX PAGES MERGED ***********************
+SCHEMA       TABLE                               INDNAME                             PAGES_MERGED        /Sec IID    MEMBER PTN
+------------ ----------------------------------- ----------------------------------- ------------- ---------- ------ ------ ---
+SYSIBM       SYSTABLESPACES                      INDTABLESPACES02                                0          0      2      0 -  
+SYSIBM       SYSTABLES                           INDTABLES09                                     0          0      9      0 -  
+WIH          WATERQUALITYMETER_ASSET_LOCATION    SQL180808233526900                              0          0      1      0 -  
+WIH          WATERQUALITYMETER_ASSET_LOCATION    WATERQUALITYMETER_ASSET_LOCATION_PK             0          0      2      0 -  
+WIH          WATERQUALITYMETER_ASSET_LOCATION    WATERQUALITYMETER_ASSET_INST_LOCATI             0          0      3      0 -  
+WIH          VALVE_ASSET_LOCATION                SQL180808233526650                              0          0      1      0 -  
+WIH          VALVE_ASSET_LOCATION                VALVE_ASSET_LOCATION_PK                         0          0      2      0 -  
+WIH          VALVE_ASSET_LOCATION                VALVE_ASSET_INST_LOCATION_IDX                   0          0      3      0 -  
+WIH          JUNCTION_ASSET_LOCATION             SQL180808233526430                              0          0      1      0 -  
+WIH          JUNCTION_ASSET_LOCATION             JUNCTION_ASSET_LOCATION_PK                      0          0      2      0 -  
+WIH          JUNCTION_ASSET_LOCATION             JUNCTION_ASSET_INST_LOCATION_IDX                0          0      3      0 -  
+WIH          TANK_ASSET_LOCATION                 SQL180808233526140                              0          0      1      0 -  
+WIH          TANK_ASSET_LOCATION                 TANK_ASSET_LOCATION_PK                          0          0      2      0 -  
+WIH          TANK_ASSET_LOCATION                 TANK_ASSET_INST_LOCATION_IDX                    0          0      3      0 -  
+WIH          PIPE_ASSET_LOCATION                 SQL180808233525900                              0          0      1      0 -  
+WIH          PIPE_ASSET_LOCATION                 PIPE_ASSET_LOCATION_PK                          0          0      2      0 -  
+WIH          PIPE_ASSET_LOCATION                 PIPE_ASSET_INST_LOCATION_IDX                    0          0      3      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          SQL180808233525660                              0          0      1      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          PIPENETWORK_ASSET_LOCATION_PK                   0          0      2      0 -  
+WIH          PIPENETWORK_ASSET_LOCATION          PIPENETWORK_ASSET_INST_LOCATION_IDX             0          0      3      0 -  
+

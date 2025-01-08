@@ -1,0 +1,617 @@
+<html><head><title>Set Up And Basic Tests</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style type="text/css">TABLE { border-collapse: collapse; border-top: 1px; border-left: 1px; border-style: solid; margin: 4px; }TD, TH { border-bottom: 1px; border-right: 1px; border-style: solid; padding: 4px; }TH { background-color: #D8D8D8; }</style></head><body><div><h1 dir="ltr">Environments</h1>
+
+<ul dir="ltr">
+	<li>Mongo Community was installed on a laptop with Windows 7. Installation used the instructions <a href="https://docs.mongodb.com/manual/tutorial/install-mongodb-enterprise-on-windows/" target="_blank">here</a>.</li>
+	<li>Mongo Enterprise Edition was installed on Red Hat Linux 7. Installation used the attached <a href="https://w3-connections.ibm.com/wikis/form/api/wiki/1879f4b2-a135-4b6b-b50a-cff447409289/page/e0de2a86-5974-4d6b-b18c-38b886736513/attachment/eb7d0563-a9b7-4a8e-970c-3b5b4f8b9548/media/mongo_enterprise_redhat_install.sh" lconnwikiparamwikiattachment="mongo_enterprise_redhat_install.sh" target="_blank">script</a> (there were issues with standard install methods).</li>
+	<li>IOC was installed on four Red Hat 6 servers.</li>
+</ul>
+
+<p dir="ltr">&nbsp;</p>
+
+<table dir="ltr" height="151" border="1" width="836">
+	<tbody>
+		<tr>
+			<td style="width: 152px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Operating System</span></td>
+			<td style="width: 156px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Database</span></td>
+			<td style="width: 124px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">CPU Cores</span></td>
+			<td style="width: 96px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">RAM</span></td>
+			<td style="width: 182px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">DISK</span></td>
+		</tr>
+		<tr>
+			<td style="width: 152px;">Windows 7, 64-bit</td>
+			<td style="width: 156px;">Mongo Community Edition 3.4</td>
+			<td style="width: 124px;">8</td>
+			<td style="width: 96px;">16 GB</td>
+			<td style="width: 182px;">SSHD (hybrid SSD drives)</td>
+		</tr>
+		<tr>
+			<td style="width: 152px; background-color: rgb(211, 211, 211);">Red Hat Linux Server 7.4 (Maipo)</td>
+			<td style="width: 156px; background-color: rgb(211, 211, 211);">Mongo Enterprise Server Edition 3.4</td>
+			<td style="width: 124px; background-color: rgb(211, 211, 211);">8</td>
+			<td style="width: 96px; background-color: rgb(211, 211, 211);">64 GB</td>
+			<td style="width: 182px; background-color: rgb(211, 211, 211);">SAS 10K RPM</td>
+		</tr>
+		<tr>
+			<td style="width: 152px;">Red Hat Linux Server 6.9 (Santiago)</td>
+			<td style="width: 156px;">IOC (DB2 10.5)</td>
+			<td style="width: 124px;">8</td>
+			<td style="width: 96px;">64 GB</td>
+			<td style="width: 182px;">SAS 10K RPM</td>
+		</tr>
+	</tbody>
+</table>
+
+<p dir="ltr">&nbsp;</p>
+
+<h1 dir="ltr">Data Source Data</h1>
+
+<h2 dir="ltr">IOC</h2>
+
+<p dir="ltr">The script <a wiki="Useful Info" target="_blank" href="https://w3-connections.ibm.com/wikis/home?lang=en-us#%21/wiki/Useful%20Info/page/Generic%20CSV%20Generator" id="wikiLink1526916644218" page="Generic CSV Generator">here</a> was used to generate 1.7 million rows of data - 42K records per day over 40 consecutive days. For example:</p>
+
+<p dir="ltr"><span style="font-size:10px;"><span style="font-family: courier new,courier,monospace;"><strong>INDEXNUM,STARTDATETIME,ENDDATETIME,LOCATION,NAME,LASTUPDATEDATETIME,TIMEZONEOFFSET,PERMITID,READING</strong><br><br>
+1,2017-12-01 00:00:00.000,2017-12-10 00:00:00.000,POINT(4.983074 
+47.666847),Large Wildfire Moving Rapidly West,&nbsp; 2017-12-20 
+00:00:00.000,0,666122, 80.276777<br><br>
+2,2017-12-01 00:00:02.000,2017-12-10 00:00:02.000,POINT(0.370679 
+49.231539),Hurricane 
+Approaching,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 2017-12-20 00:00:01.000,0,2516938,40.260140<br><br>
+3,2017-12-01 00:00:04.000,2017-12-10 00:00:04.000,POINT(3.328866 
+49.582488),Multi-vehicle Accident with Injuries,2017-12-20 
+00:00:02.000,0,922566, 97.003961</span></span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">The column 'INDEXNUM' was configured as a 'used as id' 
+column of type INTEGER. Thus, IOC maintains a unique index on the 
+column. Indexes are also created by IOC on start/end/lastupdate dates. A
+ spatial index is created on the LOCATION column. The events span an 
+area around Central France.</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><img alt="" id="1526913982732_0" src="Set%20Up%20And%20Basic%20Tests_files/editor_image_bdec46fc-bcba-4264-8f99-c8908f6e81f8.png" height="290" width="854"></p>
+
+<h2 dir="ltr">Mongo DB</h2>
+
+<p dir="ltr">The <a href="https://w3-connections.ibm.com/wikis/form/api/wiki/1879f4b2-a135-4b6b-b50a-cff447409289/page/e0de2a86-5974-4d6b-b18c-38b886736513/attachment/87eb8c64-9cb2-4849-8989-638e00ee12eb/media/csv_to_json.py" lconnwikiparamwikiattachment="csv_to_json.py" target="_blank">attached</a>
+ python script was used to convert from CSV to JSON for import into 
+MongoDB. There are probably open-source tools available to do the same 
+thing.</p>
+
+<p dir="ltr">Below is an example of one of the JSON records (where dates are of type ISODate()):</p>
+
+<p dir="ltr"><span style="color:#800080;">&nbsp;&nbsp; {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "indexnum":1,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "startdatetime":ISODate("2017-12-01T00:00:00.000Z"),<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "enddatetime":ISODate("2017-12-10T00:00:00.000Z"),<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "location":{<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "coordinates":[<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 4.983074,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 47.666847<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ],<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "type":"Point"<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; },<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "name":"Large Wildfire Moving Rapidly West",<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "lastupdatedatetime":ISODate("2017-12-20T00:00:00.000Z"),<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "timezoneoffset":0,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "permitid":666122,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "reading":80.276777<br><br>
+&nbsp;&nbsp; }</span></p>
+
+<p dir="ltr">Although schemas in Mongo are flexible and can vary from 
+one document in a collection to another, we decided to impose a schema 
+on the collection to be as consistent with the IOC data source as 
+possible:</p>
+
+<p dir="ltr"><span style="color:#006400;">db.createCollection("weather_events", {<br><br>
+&nbsp;&nbsp; validator: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; $jsonSchema: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bsonType: "object",<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; required: [ "indexnum",
+ "startdatetime", "enddatetime", "location", "name", 
+"lastupdatedatetime", "timezoneoffset", "permitid","reading" ],<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; properties: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; indexnum: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bsonType: "int",<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ description: "must be an integer and is required"<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; },<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; startdatetime: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bsonType: "date",<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ description: "must be a date and is required"<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; },<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; enddatetime: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bsonType: "date",<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ description: "must be a date and is required"<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; },<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; name: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bsonType: "string",<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ description: "must be a string and is required"<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; },<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lastupdatedatetime: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bsonType: "date",<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ description: "must be a date and is required"<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; },<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; timezoneoffset: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bsonType: "int",<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ description: "must be an integer and is required"<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; },<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; permitid: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bsonType: "int",<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ description: "must be an integer and is required"<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; },<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; reading: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bsonType: "double",<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ description: "must be a double and is required"<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br><br>
+&nbsp;&nbsp; }<br><br>
+})</span></p>
+
+<p dir="ltr">The data was imported into the weather_events collection (in the Mongotest database) using the mongoimport tool:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#0000CD;"><span style="font-family: courier new,courier,monospace;">mongoimport --file weather_events.json --collection weather_events --db mongotest --type json --mode insert</span></span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">A spatial index was created on the LOCATION column as follows:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#0000CD;">db.weather_events.createIndex( {location:"2dsphere"} )</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">Indexes were also created on the DATE and INDEXNUM columns:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#0000CD;">db.weather_events.createIndex( {startdatetime: 1 } )</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">db.weather_events.createIndex( {enddatetime: 1 } )</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">db.weather_events.createIndex( {lastupdatedatetime: 1 } )</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">db.weather_events.createIndex( {indexnum: 1 } )</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<h2 dir="ltr">Ingestion Rates</h2>
+
+<table dir="ltr" style="width: 750px;" border="1">
+	<tbody>
+		<tr>
+			<td style="width: 250px; background-color: rgb(47, 79, 79);">&nbsp;</td>
+			<td style="width: 250px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Number of Columns/Fields</span></td>
+			<td style="width: 250px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Ingestion Rate</span></td>
+		</tr>
+		<tr>
+			<td style="width: 250px;">
+			<p>IOC</p>
+
+			<p>&nbsp;&nbsp; No 'Used as an ID' column configured</p>
+
+			<p>&nbsp;&nbsp; 'Used as an ID' column configured</p>
+			</td>
+			<td style="width: 250px;">31*</td>
+			<td style="width: 250px;">
+			<p>&nbsp;</p>
+
+			<p>2100 per second</p>
+
+			<p>1484 per second</p>
+			</td>
+		</tr>
+		<tr>
+			<td style="width: 250px; background-color: rgb(211, 211, 211);">DB2 (Load command)</td>
+			<td style="width: 250px; background-color: rgb(211, 211, 211);"><br><br>
+			&nbsp;9<br><br>
+			&nbsp;</td>
+			<td style="width: 250px; background-color: rgb(211, 211, 211);">&gt; 100,000 per second*</td>
+		</tr>
+		<tr>
+			<td style="width: 250px;">
+			<p>MONGO DB</p>
+
+			<p>&nbsp;&nbsp; Windows</p>
+
+			<p>&nbsp;&nbsp; Linux</p>
+			</td>
+			<td style="width: 250px;">&nbsp; 9</td>
+			<td style="width: 250px;">
+			<p>&nbsp;</p>
+
+			<p>42,000&nbsp; per second</p>
+
+			<p>42,000 per second</p>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<p dir="ltr">* IOC adds several generated columns (e.g., STARTYEAR, STARTHOUR, ENDYEAR, etc.).</p>
+
+<p dir="ltr">**&nbsp; The performance of DB2's load command will vary according to the number and type of columns. See <a wiki="Useful Info" target="_blank" href="https://w3-connections.ibm.com/wikis/home?lang=en-us#%21/wiki/Useful%20Info/page/Processing%20CSV%20Data%20Efficiently%20using%20DB2%20Bulk%20Load%20Tools" id="wikiLink1527085204297" page="Processing CSV Data Efficiently using DB2 Bulk Load Tools">here</a> for some examples.</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<h2 dir="ltr">Storage Usage</h2>
+
+<p dir="ltr"><em>IOC Queries (kB):</em></p>
+
+<p dir="ltr"><span style="color:#0000CD;">select tabname,data_object_p_size from sysibmadm.admintabinfo where tabschema='IOC' and tabname = 'TARGET_TABLE_WEATHER_EVENTS'</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">select 
+tabname,index_object_p_size from 
+table(admin_get_index_info('','IOC','TARGET_TABLE_WEATHER_EVENTS')) 
+group by tabname,index_object_p_size</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><em>Mongo DB Queries (bytes):</em></p>
+
+<p dir="ltr"><span style="color:#0000CD;">&gt; db.weather_events.stats().storageSize<br><br>
+134197248<br><br>
+&gt; db.weather_events.stats().totalIndexSize<br><br>
+100573184</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">&gt; db.weather_events.stats().wiredTiger.cache</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">...<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "bytes currently in the cache" : 520586150,</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">...</span></p>
+
+<table dir="ltr" style="width: 750px;" border="1">
+	<tbody>
+		<tr>
+			<td style="width: 125px; background-color: rgb(47, 79, 79);">&nbsp;</td>
+			<td style="width: 125px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Records</span></td>
+			<td style="width: 125px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Table Storage (MB)</span></td>
+			<td style="width: 125px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Index Storage (MB)</span></td>
+			<td style="width: 125px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Total Storage (MB)</span></td>
+			<td style="width: 125px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Memory Used (MB)</span></td>
+		</tr>
+		<tr>
+			<td style="width: 125px;">IOC</td>
+			<td style="width: 125px;">1,692,000</td>
+			<td style="width: 125px;">225</td>
+			<td style="width: 125px;">246</td>
+			<td style="width: 125px;">471</td>
+			<td style="width: 125px;">&nbsp;</td>
+		</tr>
+		<tr>
+			<td style="width: 125px; background-color: rgb(211, 211, 211);">Mongo DB</td>
+			<td style="width: 125px; background-color: rgb(211, 211, 211);">1,692,000</td>
+			<td style="width: 125px; background-color: rgb(211, 211, 211);">134</td>
+			<td style="width: 125px; background-color: rgb(211, 211, 211);">100*</td>
+			<td style="width: 125px; background-color: rgb(211, 211, 211);">234</td>
+			<td style="width: 125px; background-color: rgb(211, 211, 211);">520</td>
+		</tr>
+	</tbody>
+</table>
+
+<p dir="ltr">* In this particular case we could have specified the 
+'indexnum' column as the primary key column (instead of having MongoDB 
+autogenerate an '_id' column). That would have saved a further 16 MB of 
+storage and a corresponding amount of RAM.</p>
+
+<h2 dir="ltr">Data Aging in Mongo DB</h2>
+
+<p dir="ltr">Mongo implements data aging using TTL (time-to-live) indexes (<a href="https://docs.mongodb.com/manual/tutorial/expire-data/" target="_blank">link</a>).</p>
+
+<p dir="ltr">For example, to age documents where the field LASTUPDATEDATETIME is older than 30 days:</p>
+
+<p dir="ltr"><span style="color:#0000CD;">db.weather_events.createIndex( { "lastupdatedatetime": 1 }, { expireAfterSeconds: 2592000</span> <span style="color:#0000CD;">} )</span></p>
+
+<p dir="ltr">Each document in a collection could also be expired at a 
+specific date by setting 'expireAfterSeconds' to 0. The date field will 
+then hold the time when the document should be expired by Mongo DB:</p>
+
+<p dir="ltr"><span style="color:#0000CD;">db.weather_events.createIndex( { "expirationDate": 1 }, { expireAfterSeconds: 0 } )</span></p>
+
+<p dir="ltr">Using the aggregation pipeline, finer resolution data could
+ be summarized into daily/monthly/yearly rollup collections before it 
+has been aged.</p>
+
+<h2 dir="ltr">Encryption</h2>
+
+<p dir="ltr">Since version 3.2 the default storage engine used by Mongo DB, WiredTiger, provides encryption at rest. More details <a href="https://docs.mongodb.com/manual/core/security-encryption-at-rest/" target="_blank">here</a>.</p>
+
+<p dir="ltr">Other security features are described <a href="https://docs.mongodb.com/manual/security/" target="_blank">here</a>.</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<h1 dir="ltr">Basic Tests</h1>
+
+<h2 dir="ltr">Standard Indexed Queries</h2>
+
+<h3 dir="ltr">IOC</h3>
+
+<p dir="ltr">We executed two count queries against the IOC data source, one on startdatetime and one on indexnum (both columns indexed):</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#006400;">select count from 
+ioc.target_table_weather_events where startdatetime &gt; '2017-12-23 
+00:00:00' and startdatetime &lt; '2017-12-25 00:00:00';</span></p>
+
+<p dir="ltr"><span style="color:#006400;">select count from ioc.target_table_weather_events where indexnum &gt; 10 and indexnum &lt; 20;</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">To capture timing we created a simple shell script as follows:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#0000CD;">db2 connect to iocdata &gt; /dev/null</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">echo "Date Query"</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">date1=$(date +"%s%N")</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">db2 "select count from 
+ioc.target_table_weather_events where startdatetime &gt; '2017-12-23 
+00:00:00' and startdatetime &lt; '2017-12-25 00:00:00'";</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">date2=$(date +"%s%N")<br><br>
+diff=$(($date2-$date1))<br><br>
+echo "$(($diff/1000000000)) seconds, $(($diff % 1000000000/1000000)) milliseconds&nbsp; elapsed."</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">echo "Numerical query"</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">date1=$(date +"%s%N")</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">db2 "select count from ioc.target_table_weather_events where indexnum &gt; 10 and indexnum &lt; 20";</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">date2=$(date +"%s%N")<br><br>
+diff=$(($date2-$date1))<br><br>
+echo "$(($diff/1000000000)) seconds, $(($diff % 1000000000/1000000)) milliseconds&nbsp; elapsed."</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">db2 connect reset &gt; /dev/null</span></p>
+
+<h3 dir="ltr">Mongo DB</h3>
+
+<p dir="ltr">From the Mongo Shell the two equivalent queries are as follows:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#006400;">db.weather_events.find( { startdatetime: {$gt: ISODate("2017-12-23 00:00:00"), $lt: ISODate("2017-12-25 00:00:00")} } ).count()</span></p>
+
+<p dir="ltr"><span style="color:#006400;">db.weather_events.find( { indexnum: {$gt: 10, $lt: 20} }).count()</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">To capture timing in the Mongo case a simple Java program 
+was created. There are three basic ways to formulate queries like the 
+above examples using the Mongo Java driver:</p>
+
+<p dir="ltr">1. Use Document.parse() to parse the Json string:</p>
+
+<p dir="ltr"><span style="color:#B22222;">&nbsp;&nbsp;&nbsp; String 
+dateQuery = "{ startdatetime: {$gt: ISODate(\"2017-12-23 00:00:00\"), 
+$lt: ISODate(\"2017-12-25 00:00:00\")} }"</span></p>
+
+<p dir="ltr"><span style="color:#B22222;">&nbsp;&nbsp;&nbsp; long count = weatherEvents.count(Document.parse(dateQuery));</span></p>
+
+<p dir="ltr">2. Use the 'new Document()' pattern:</p>
+
+<p dir="ltr"><span style="color:#B22222;">&nbsp;&nbsp;&nbsp;&nbsp; count = weatherEvents.count(new Document("indexnum",new Document("$gt",10).append("$lt", 20)))</span></p>
+
+<p dir="ltr">3. Use helper functions com.mongodb.client.model.Filters.* class:</p>
+
+<p dir="ltr"><span style="color:#B22222;">&nbsp;&nbsp;&nbsp; SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");</span></p>
+
+<p dir="ltr"><span style="color:#B22222;">&nbsp;&nbsp;&nbsp; count = weatherEvents.count(and(gt("startdatetime", format.parse("2017-12-23 00:00:00")),<br><br>
+&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 
+&nbsp;&nbsp; &nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp;&nbsp; lt("startdatetime", format.parse("2017-12-25 
+00:00:00"))));</span></p>
+
+<p dir="ltr"><span style="color:#B22222;">&nbsp;&nbsp;&nbsp; count = weatherEvents.count(and(gt("indexnum", 10), lt("indexnum", 20)));</span></p>
+
+<p dir="ltr">For a basic count query the times for each of the three methods were as follows:</p>
+
+<ul dir="ltr">
+	<li>Method 1: 8.4 ms</li>
+	<li>Method 2: 3 ms</li>
+	<li>Method 3: 1 ms</li>
+</ul>
+
+<p dir="ltr">On that basis Method 3 was used for the benchmark timings.</p>
+
+<table dir="ltr" style="width: 500px;" border="1">
+	<tbody>
+		<tr>
+			<td style="width: 166px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Query</span></td>
+			<td style="width: 166px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">IOC</span></td>
+			<td style="width: 168px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">MongoDB</span></td>
+		</tr>
+		<tr>
+			<td style="width: 166px;">Date</td>
+			<td style="width: 166px;">86 ms</td>
+			<td style="width: 168px;">73 ms</td>
+		</tr>
+		<tr>
+			<td style="width: 166px; background-color: rgb(211, 211, 211);">Count</td>
+			<td style="width: 166px; background-color: rgb(211, 211, 211);">&nbsp; 9 ms</td>
+			<td style="width: 168px; background-color: rgb(211, 211, 211);">&nbsp; 1 ms</td>
+		</tr>
+	</tbody>
+</table>
+
+<p dir="ltr">&nbsp;</p>
+
+<h2 dir="ltr">Geospatial Queries</h2>
+
+<p dir="ltr">We measured response times for a count and a paged query 
+over a range of four zoom levels. These are typical queries used by 
+IOC's data source framework.</p>
+
+<h3 dir="ltr">IOC</h3>
+
+<p dir="ltr"><span style="color:#006400;">SELECT assessmentdatetime,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; startdatetime,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; objectid,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; deleteflag,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lastupdatedatetime,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; indexnum,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; enddatetime,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; classification,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationid,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; timezoneoffset,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; name,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; location ..st_astext AS Location<br><br>
+FROM&nbsp;&nbsp; ioc.target_view_weather_events<br><br>
+WHERE&nbsp; db2gse.St_intersects(location, db2gse.St_buffer<br><br>
+(db2gse.St_geometry(CAST('POLYGON((2.551103 45.881680,<br><br>
+3.056474 45.881680,<br><br>
+3.056474 46.037291,<br><br>
+2.551103 46.037291,<br><br>
+2.551103 45.881680))' AS CLOB),1003),<br><br>
+&nbsp;0)) = 1 selectivity 0.000001<br><br>
+FETCH first 5001 ROWS only<br><br>
+OPTIMIZE FOR 5001 ROWS;</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#006400;">select count from (SELECT assessmentdatetime,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; startdatetime,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; objectid,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; deleteflag,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lastupdatedatetime,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; indexnum,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; enddatetime,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; classification,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationid,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; timezoneoffset,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; name,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; location ..st_astext AS Location<br><br>
+FROM&nbsp;&nbsp; ioc.target_view_weather_events<br><br>
+WHERE&nbsp; db2gse.St_intersects(location, db2gse.St_buffer<br><br>
+(db2gse.St_geometry(CAST('POLYGON((2.551103 45.881680,<br><br>
+3.056474 45.881680,<br><br>
+3.056474 46.037291,<br><br>
+2.551103 46.037291,<br><br>
+2.551103 45.881680))' AS CLOB),1003),<br><br>
+&nbsp;0)) = 1 selectivity 0.000001);</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">The coordinates above are varied according to zoom level. The values above are for the maximum zoom level tested.</p>
+
+<h3 dir="ltr">Mongo DB</h3>
+
+<p dir="ltr">The equivalent queries in the Mongo Shell would be as follows (again, coordinates will vary according to zoom level):</p>
+
+<p dir="ltr"><span style="color:#0000CD;">db.weather_events.find( { 
+location: { $geoIntersects: { $geometry: { type: "Polygon" , 
+coordinates:&nbsp; [ [ [ 2.551103, 45.881680 ], [ 3.056474, 45.881680 ],
+ [ 3.056474, 46.037291 ], [ 2.551103, 46.037291 ], [ 2.551103, 45.881680
+ ] ] ] } } } } ).count()</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">db.runCommand( { find: 
+"weather_events", filter: { location: { $geoIntersects: { $geometry: { 
+type: "Polygon" , coordinates: [ [ [ 2.551103, 45.881680 ], [ 3.056474, 
+45.881680 ], [ 3.056474, 46.037291 ], [ 2.551103, 46.037291 ], [ 
+2.551103, 45.881680 ] ] ] } } } }, limit: 5000, batchSize: 5000 } )</span></p>
+
+<p dir="ltr">For timing purposes the queries were executed using a Java program.</p>
+
+<h3 dir="ltr">Performance Comparison</h3>
+
+<p dir="ltr">The number of matching items (out of a total of 1.68 million) at each of the four zoom levels tested is as follows:</p>
+
+<ul dir="ltr">
+	<li>Zoom 1: 847,876 (50%)</li>
+	<li>Zoom 2: 284,676 (17%)</li>
+	<li>Zoom 3:&nbsp;&nbsp; 70,912 (4%)</li>
+	<li>Zoom 4:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 4532 (0.02%)</li>
+</ul>
+
+<table dir="ltr" height="233" border="1" width="501">
+	<tbody>
+		<tr>
+			<td style="width: 79px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Query</span></td>
+			<td style="width: 80px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Zoom Level</span></td>
+			<td style="width: 85px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">IOC</span></td>
+			<td style="width: 101px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Mongo (Windows)</span></td>
+			<td style="width: 87px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Mongo (Linux)</span></td>
+		</tr>
+		<tr>
+			<td colspan="1" rowspan="4" style="width: 79px;">Count</td>
+			<td style="width: 80px;">1</td>
+			<td style="width: 85px;">32,321 ms</td>
+			<td style="width: 101px;">6912 ms</td>
+			<td style="width: 87px;">12,629 ms</td>
+		</tr>
+		<tr>
+			<td style="width: 80px; background-color: rgb(211, 211, 211);">2</td>
+			<td style="width: 85px; background-color: rgb(211, 211, 211);">11,086 ms</td>
+			<td style="width: 101px; background-color: rgb(211, 211, 211);">2808 ms</td>
+			<td style="width: 87px; background-color: rgb(211, 211, 211);">&nbsp;&nbsp; 5330 ms</td>
+		</tr>
+		<tr>
+			<td style="width: 80px;">3</td>
+			<td style="width: 85px;">&nbsp;&nbsp; 2914 ms</td>
+			<td style="width: 101px;">&nbsp; 683 ms</td>
+			<td style="width: 87px;">&nbsp;&nbsp; 1288 ms</td>
+		</tr>
+		<tr>
+			<td style="width: 80px; background-color: rgb(211, 211, 211);">4</td>
+			<td style="width: 85px; background-color: rgb(211, 211, 211);">&nbsp;&nbsp;&nbsp;&nbsp; 314 ms</td>
+			<td style="width: 101px; background-color: rgb(211, 211, 211);">&nbsp;&nbsp;&nbsp; 48 ms</td>
+			<td style="width: 87px; background-color: rgb(211, 211, 211);">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 90 ms</td>
+		</tr>
+		<tr>
+			<td colspan="1" rowspan="4" style="width: 79px;">Paging</td>
+			<td style="width: 80px;">1</td>
+			<td style="width: 85px;">&nbsp;&nbsp; 2599 ms</td>
+			<td style="width: 101px;">&nbsp; 129 ms</td>
+			<td style="width: 87px;">&nbsp;&nbsp;&nbsp;&nbsp; 228 ms</td>
+		</tr>
+		<tr>
+			<td style="width: 80px; background-color: rgb(211, 211, 211);">2</td>
+			<td style="width: 85px; background-color: rgb(211, 211, 211);">&nbsp;&nbsp;&nbsp;&nbsp; 973 ms</td>
+			<td style="width: 101px; background-color: rgb(211, 211, 211);">&nbsp; 101 ms</td>
+			<td style="width: 87px; background-color: rgb(211, 211, 211);">&nbsp;&nbsp;&nbsp;&nbsp; 150 ms</td>
+		</tr>
+		<tr>
+			<td style="width: 80px;">3</td>
+			<td style="width: 85px;">&nbsp;&nbsp;&nbsp;&nbsp; 550 ms</td>
+			<td style="width: 101px;">&nbsp; 103 ms</td>
+			<td style="width: 87px;">&nbsp;&nbsp;&nbsp;&nbsp; 136 ms</td>
+		</tr>
+		<tr>
+			<td style="width: 80px; background-color: rgb(211, 211, 211);">4</td>
+			<td style="width: 85px; background-color: rgb(211, 211, 211);">&nbsp;&nbsp;&nbsp;&nbsp; 374 ms</td>
+			<td style="width: 101px; background-color: rgb(211, 211, 211);">&nbsp;&nbsp;&nbsp; 75 ms</td>
+			<td style="width: 87px; background-color: rgb(211, 211, 211);">&nbsp;&nbsp;&nbsp;&nbsp; 121 ms</td>
+		</tr>
+	</tbody>
+</table>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">Mongo performs significantly better than IOC in all cases. 
+Interestingly, Mongo Community Edition on Windows performs much better 
+than Mongo Enterprise Edition on Linux Red Hat 7. That goes against the 
+conventional wisdom of online discussions. At this point it's not clear 
+why Windows performance in this case is better. It may be down to the 
+hybrid SSH drives used on the Windows machine.</p>
+
+<p dir="ltr">&nbsp;</p></div></body></html>

@@ -1,0 +1,250 @@
+<html><head><title>Benchmarking Ingestion in IoT</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style type="text/css">TABLE { border-collapse: collapse; border-top: 1px; border-left: 1px; border-style: solid; margin: 4px; }TD, TH { border-bottom: 1px; border-right: 1px; border-style: solid; padding: 4px; }TH { background-color: #D8D8D8; }</style></head><body><div sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><h1 dir="ltr">Introduction</h1>
+
+<p dir="ltr">This page describes some basic tests to measure end-to-end throughput in IoT CS.</p>
+
+<h1 dir="ltr">Set Up</h1>
+
+<p dir="ltr">Set up for this test is described <a lconnwikimacro="wikilink" href="/wikis/home/wiki/Useful%20Info/page/End-to-end%20IoT%20Device%20Set%20Up%20-%20Automation%20using%20Node%20Red" lconnwikiparamwikipage="End-to-end IoT Device Set Up - Automation using Node Red">here</a>, including event type schema, logical interface schema and mapping definitions.</p>
+
+<p dir="ltr">The schemas define 34 fields conforming to the Common 
+Alerting Protocol standard, six of which are required. Three additional 
+fields (startdate, enddate, lastupdate) are also defined (standard 
+minimum fields defined in IOC data sources, along with the required 
+field 'location' field). All of the fields are defined as string types, 
+although seven are mapped to date fields in the logical interface. The 
+mapping definitions use the '$now()' function to provide a default date 
+where the field is null (to avoid a JSON validation error):</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#006400;">"lastupdate": "$event.d.lastupdate?$event.d.lastupdate:$now()"</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">The simulator described <a lconnwikimacro="wikilink" href="/wikis/home/wiki/Useful%20Info/page/CSV-based%20Event%20Simulator%20for%20IoT" lconnwikiparamwikipage="CSV-based Event Simulator for IoT">here</a>
+ reads events from an input CSV file and publishes messages (one by one)
+ to the pre-defined event topic (iot-2/evt/capAlert/fmt/json). Raw event
+ data is routed to Cloudant, while the transformed data is routed to a 
+DB2 target table defined by the Logical Interface. No rules are defined 
+for the test.</p>
+
+<p dir="ltr">A sample event looks as follows:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#800080;">&nbsp;&nbsp; {</span></p>
+
+<p dir="ltr"><span style="color:#800080;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-3">"d"</span><span class="sColon" id="s-4">:</span><span class="sBrace structure-3" id="s-5">{ </span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-6">"event"</span><span class="sColon" id="s-7">:</span><span class="sObjectV" id="s-8">"Smoking&nbsp;violation"</span><span class="sComma" id="s-9">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-10">"msgType"</span><span class="sColon" id="s-11">:</span><span class="sObjectV" id="s-12">"Alert"</span><span class="sComma" id="s-13">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-14">"urgency"</span><span class="sColon" id="s-15">:</span><span class="sObjectV" id="s-16">"Future"</span><span class="sComma" id="s-17">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-18">"status"</span><span class="sColon" id="s-19">:</span><span class="sObjectV" id="s-20">"Complete"</span><span class="sComma" id="s-21">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-22">"sender"</span><span class="sColon" id="s-23">:</span><span class="sObjectV" id="s-24">"John"</span><span class="sComma" id="s-25">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-26">"headline"</span><span class="sColon" id="s-27">:</span><span class="sObjectV" id="s-28">"Violation"</span><span class="sComma" id="s-29">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-30">"certainty"</span><span class="sColon" id="s-31">:</span><span class="sObjectV" id="s-32">"Observed"</span><span class="sComma" id="s-33">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-34">"enddate"</span><span class="sColon" id="s-35">:</span><span class="sObjectV" id="s-36">"2018-11-02T19:06:00Z"</span><span class="sComma" id="s-37">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-38">"startdate"</span><span class="sColon" id="s-39">:</span><span class="sObjectV" id="s-40">"2018-11-02T19:05:00Z"</span><span class="sComma" id="s-41">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-42">"area"</span><span class="sColon" id="s-43">:</span><span class="sObjectV" id="s-44">"Gate&nbsp;C"</span><span class="sComma" id="s-45">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-46">"references"</span><span class="sColon" id="s-47">:</span><span class="sObjectV" id="s-48">""</span><span class="sComma" id="s-49">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-50">"category"</span><span class="sColon" id="s-51">:</span><span class="sObjectV" id="s-52">"Health"</span><span class="sComma" id="s-53">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-54">"location"</span><span class="sColon" id="s-55">:</span><span class="sObjectV" id="s-56">"POINT(-93.1965780&nbsp;44.9842060)"</span><span class="sComma" id="s-57">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-58">"severity"</span><span class="sColon" id="s-59">:</span><span class="sObjectV" id="s-60">"Moderate"</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sBrace structure-3" id="s-61">}</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;<span class="sBrace structure-2" id="s-62">}</span></span></p>
+
+<p dir="ltr">Including additional IoT columns the total number of 
+columns in the target table is 44. To facilitate timing an additional 
+column is 'update_time' was added:</p>
+
+<p dir="ltr"><span style="color:#006400;">alter table 
+DASH10952.IOT_CAPALERTSENDER_V4 add update_time TIMESTAMP NOT NULL 
+GENERATED FOR EACH ROW ON UPDATE AS ROW CHANGE TIMESTAMP;</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="font-size:12px;"><span style="color:#800080;">CREATE TABLE "DASH10952"."IOT_CAPALERTSENDER_V4" (<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"NOTE" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"ADDRESSES" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"EXPIRES" TIMESTAMP,<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"MSGTYPE" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"CODE" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"AREADES" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"REFERENCES" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"DESCRIPTION" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"SOURCE" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"STARTDATE" TIMESTAMP,<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"EFFECTIVE" TIMESTAMP,<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"SENDERNAME" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"URGENCY" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"WEB" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"CONTACT" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"SCOPE" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"INCIDENTS" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"EVENT" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"HEADLINE" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"AREA" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"SEVERITY" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"IDENTIFIER" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"RESOURCE" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"CERTAINTY" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"ONSET" TIMESTAMP,<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"SENT" TIMESTAMP,<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"EVENTCODE" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"ENDDATE" TIMESTAMP,<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"SENDER" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"INSTRUCTION" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"GEOCODE" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"RESTRICTION" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"LOCATION" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"LASTUPDATE" TIMESTAMP,<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"CATEGORY" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"PARAMETERS" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"STATUS" VARCHAR(1024),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"DEVICETYPE" VARCHAR(64) NOT NULL,<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"DEVICEID" VARCHAR(256) NOT NULL,<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"LOGICALINTERFACE_ID" VARCHAR(64) NOT NULL,<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"EVENTTYPE" VARCHAR(64),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"FORMAT" VARCHAR(32) NOT NULL,<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"RCV_TIMESTAMP_UTC" TIMESTAMP NOT NULL,<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"UPDATED_UTC" TIMESTAMP NOT NULL,<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"UPDATE_TIME" TIMESTAMP NOT NULL<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;DATA CAPTURE NONE<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;COMPRESS YES;</span></span></p>
+
+<h1 dir="ltr">Measurements</h1>
+
+<p dir="ltr">Input files with 500, 1000 and 5000 records were ingested and published one by one to the event topic for processing.</p>
+
+<p dir="ltr">Initially the events were published in succession with no 
+interval. This worked fine for 500 input events (one record in the 
+target table per input event). With 1000 events the system couldn't keep
+ up and, oddly, resulted in 1436 output events in the target table. In 
+other cases there were fewer output events than input events. Presumably
+ a bit of tuning (e.g., queue sizes, queue persistence) would resolve 
+this issue. A small interval was introduced to slow the pace of the 
+simulator and, with an appropriately sized interval, the system was able
+ to cope with each input load. The interval was smaller than the average
+ processing time, so had no impact on throughput.</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">The following query was used to measure the difference 
+between the first and last events. This difference was used to measure 
+throughput:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><font size="2"><font face="Courier New"><font color="blue">SELECT</font>&nbsp;<font color="maroon">count</font>&nbsp; <font color="blue">AS</font>&nbsp;<font color="maroon">count</font><font color="silver">,</font><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="fuchsia"><i sandbox="allow-forms allow-same-origin allow-scripts allow-popups">Min</i></font><font color="maroon">(</font><font color="maroon">update_time</font><font color="maroon">)</font> <font color="blue">AS</font>&nbsp;<font color="maroon">min_update</font><font color="silver">,</font><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="fuchsia"><i sandbox="allow-forms allow-same-origin allow-scripts allow-popups">Max</i></font><font color="maroon">(</font><font color="maroon">update_time</font><font color="maroon">)</font> <font color="blue">AS</font><font color="maroon"> max_update</font><font color="silver">,</font><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#FF0080"><b sandbox="allow-forms allow-same-origin allow-scripts allow-popups">Timestampdiff</b></font><font color="maroon">(</font><font color="black">2</font><font color="silver">,</font>&nbsp;<font color="fuchsia"><i sandbox="allow-forms allow-same-origin allow-scripts allow-popups">Char</i></font><font color="maroon">(</font><font color="fuchsia"><i sandbox="allow-forms allow-same-origin allow-scripts allow-popups">Max</i></font><font color="maroon">(</font><font color="maroon">update_time</font><font color="maroon">)</font>&nbsp;<font color="silver">-</font>&nbsp;<font color="fuchsia"><i sandbox="allow-forms allow-same-origin allow-scripts allow-popups">Min</i></font><font color="maroon">(</font><font color="maroon">update_time</font><font color="maroon">)</font><font color="maroon">)</font><font color="maroon">)</font>&nbsp;<font color="blue">AS</font>&nbsp;<font color="maroon">diff</font><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<font color="blue">FROM</font>&nbsp;&nbsp;&nbsp;<font color="maroon">dash10952</font><font color="silver">.</font><font color="maroon">iot_capalertsender_v4</font>&nbsp; </font></font></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<h1 dir="ltr">Results</h1>
+
+<table dir="ltr" style="width: 600px; table-layout: fixed; overflow-wrap: break-word; border-collapse: collapse; border-color: rgb(105, 105, 105);" border="1">
+	<tbody sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+		<tr sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			<td style="overflow: hidden; width: 100px; border-color: rgb(105, 105, 105); background-color: rgb(47, 79, 79);"><span style="color:#ffffff;">No. Input Events</span></td>
+			<td style="overflow: hidden; width: 100px; border-color: rgb(105, 105, 105); background-color: rgb(47, 79, 79);"><span style="color:#ffffff;">Event Interval</span></td>
+			<td style="overflow: hidden; width: 100px; border-color: rgb(105, 105, 105); background-color: rgb(47, 79, 79);"><span style="color:#ffffff;">No. Target Records</span></td>
+			<td style="overflow: hidden; width: 100px; border-color: rgb(105, 105, 105); background-color: rgb(47, 79, 79);"><span style="color:#ffffff;">Test Duration</span></td>
+			<td style="overflow: hidden; width: 100px; border-color: rgb(105, 105, 105); background-color: rgb(47, 79, 79);"><span style="color:#ffffff;">Throughput (events/second)</span></td>
+			<td style="overflow: hidden; width: 100px; border-color: rgb(105, 105, 105); background-color: rgb(47, 79, 79);"><span style="color:#ffffff;">Processing time per event (ms)</span></td>
+		</tr>
+		<tr sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">&nbsp; 500</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">&nbsp; 0</td>
+			<td style="overflow: hidden; width: 100px; border-color: rgb(105, 105, 105); background-color: rgb(0, 128, 0);">&nbsp; <span style="color:#ffffff;">500</span></td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">&nbsp; 80</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">6.25</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">160</td>
+		</tr>
+		<tr sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">&nbsp; 500</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">10 ms</td>
+			<td style="overflow: hidden; width: 100px; border-color: rgb(105, 105, 105); background-color: rgb(0, 128, 0);">&nbsp; <span style="color:#ffffff;">500</span></td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">&nbsp; 78</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">6.41</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">156</td>
+		</tr>
+		<tr sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">&nbsp; 500</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">50 ms</td>
+			<td style="overflow: hidden; width: 100px; border-color: rgb(105, 105, 105); background-color: rgb(0, 128, 0);"><span style="color:#ffffff;">&nbsp; 500</span></td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">&nbsp; 79</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">6.33</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">158</td>
+		</tr>
+		<tr sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">&nbsp;</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">&nbsp;</td>
+			<td style="overflow: hidden; width: 100px; border-color: rgb(105, 105, 105);">&nbsp;</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">&nbsp;</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">&nbsp;</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">&nbsp;</td>
+		</tr>
+		<tr sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">1000</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">&nbsp; 0</td>
+			<td style="overflow: hidden; width: 100px; border-color: rgb(105, 105, 105); background-color: rgb(255, 0, 0);"><span style="color:#ffffff;">1436</span></td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">229</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">4.37</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">228</td>
+		</tr>
+		<tr sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">1000</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">10 ms</td>
+			<td style="overflow: hidden; width: 100px; border-color: rgb(105, 105, 105); background-color: rgb(255, 0, 0);"><span style="color:#ffffff;">1228</span></td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">192</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">5.21</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">192</td>
+		</tr>
+		<tr sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">1000</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">25 ms</td>
+			<td style="overflow: hidden; width: 100px; border-color: rgb(105, 105, 105); background-color: rgb(0, 128, 0);"><span style="color:#ffffff;">1000</span></td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">157</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">6.37</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">157</td>
+		</tr>
+		<tr sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">&nbsp;</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">&nbsp;</td>
+			<td style="overflow: hidden; width: 100px; border-color: rgb(105, 105, 105);">&nbsp;</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">&nbsp;</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">&nbsp;</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">&nbsp;</td>
+		</tr>
+		<tr sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">5000</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">25 ms</td>
+			<td style="overflow: hidden; width: 100px; border-color: rgb(105, 105, 105); background-color: rgb(255, 0, 0);"><span style="color:#ffffff;">4783</span></td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">777</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">6.44</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">155</td>
+		</tr>
+		<tr sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">5000</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">50 ms</td>
+			<td style="overflow: hidden; width: 100px; border-color: rgb(105, 105, 105); background-color: rgb(0, 128, 0);"><span style="color:#ffffff;">5000</span></td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">789</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">6.33</td>
+			<td style="overflow: hidden; width: 100px; border-color : #696969;">158</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3 dir="ltr"><em sandbox="allow-forms allow-same-origin allow-scripts allow-popups">Notes:</em></h3>
+
+<ul dir="ltr">
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups">Once the system can keep up with the simulator the average processing time is fairly consistent at around 158 ms.</li>
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups">There doesn't appear to be support for bulk ingestion in the current version of IoT CS.</li>
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups">There is currently no insight into where time is being spent at each stage of the flow.</li>
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups">The
+ environment under test is a basic non-production instance, so there may
+ be significant resource/network contributions to the latency</li>
+</ul></div></body></html>

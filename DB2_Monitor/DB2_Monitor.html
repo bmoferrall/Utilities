@@ -1,0 +1,971 @@
+<html><head><title>Database Maintenance and Monitoring Scripts</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style type="text/css">TABLE { border-collapse: collapse; border-top: 1px; border-left: 1px; border-style: solid; margin: 4px; }TD, TH { border-bottom: 1px; border-right: 1px; border-style: solid; padding: 4px; }TH { background-color: #D8D8D8; }</style></head><body><div sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><p dir="ltr">&nbsp;</p>
+
+<ul dir="ltr">
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="font-size:18px;"><a href="#Monitoring">Monitoring</a></span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+	&nbsp;</li>
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="font-size:18px;"><a href="#Maintenance">Maintenance</a></span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+	&nbsp;</li>
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="font-size:18px;"><a href="#Table Sizes">Table&nbsp;Sizes</a></span></li>
+</ul>
+
+<p dir="ltr">&nbsp;</p>
+
+<h1 dir="ltr"><a id="Monitoring" name="Monitoring"></a>DB2 Monitoring Scripts for Linux</h1>
+
+<h2 dir="ltr">About</h2>
+
+<p dir="ltr">Database servers have proven to be a major source of bottlenecks in many of our applications.</p>
+
+<p dir="ltr">Disk I/O issues and excessive CPU utilization can be 
+caused, for example, by poorly designed data models, inefficient SQL 
+queries, lack of appropriate indexing, suboptimal database configuration
+ settings and lack of database maintenance.</p>
+
+<p dir="ltr">DB2 exposes a number of monitoring interfaces (e.g., 
+MON_GET_PKG_CACHE_STMT, MON_GET_TABLE, MON_GET_INDEX, 
+MON_GET_CONNECTION) that allow us to query what is happening in our 
+databases at a very fine-grained level. Some of the metrics we can 
+access using these interfaces include:</p>
+
+<ul dir="ltr">
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups">how much CPU time a query requires for execution</li>
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups">how much time a connection agent has to wait before it can execute a statement</li>
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups">how many times a query has been executed over a period of time</li>
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups">the isolation level that is used by a statement</li>
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups">how many rows a query has to read from tables or indexes</li>
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups">how many sort operations are required in a query execution</li>
+</ul>
+
+<p dir="ltr">We can create formulas based on a combination of metrics, 
+and take differences over a period of time, to derive further useful 
+metrics, for example:</p>
+
+<ul dir="ltr">
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups">how efficiently we are using buffer pools (buffer pool hit ratios)</li>
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups">how many SQL statements are executed per second (an indication of SQL throughput)</li>
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups">how many direct reads to disk are occurring per second (due to non-inlined Large Object columns)</li>
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups">how many rows are being read per second</li>
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups">which tables and indexes are most often accessed during a test phase</li>
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups">which tables are undergoing frequent expensive scans</li>
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups">the extent of lock and sort activity.</li>
+</ul>
+
+<p dir="ltr"><span style="font-family:calibri,sans-serif;"><span style="font-size:11.0pt;">We
+ have written a number of SQL scripts that query these interfaces and 
+generate reports. A driver shell script will invoke these SQL scripts 
+and allow us to automate the process of generating these reports during 
+test runs. If the reports indicate that one or more SQL statements are 
+performing poorly we can use additional tooling to explore the 
+possibility of tuning these statements: by rewriting the queries, adding
+ indexes, creating intermediate summary tables (MQTs), etc. Data Studio 
+has a very useful tool called ‘Optim Access Plan Explorer’, which 
+graphically displays the execution plan for a statement and the 
+estimated relative cost of executing each part of the plan. You can also
+ install a plugin called ‘Optim Query Workload Tuner’ (at the time of 
+writing, part numbers </span></span>CIK8GML and CIK8IML in Xtreme Leverage for the Windows and Linux versions respectively)<span style="font-family:calibri,sans-serif;"><span style="font-size:11.0pt;">
+ which will give recommendations on how you might rewrite a query and 
+whether an index or indexes can help improve the performance of that 
+query</span></span>.</p>
+
+<h2 dir="ltr">Download</h2>
+
+<p dir="ltr">The current version of the scripts can be downloaded from <a href="https://w3-connections.ibm.com/wikis/form/api/wiki/1879f4b2-a135-4b6b-b50a-cff447409289/page/87e447f5-c07f-47b1-b22a-e06267514f39/attachment/0482e713-ca2f-47cf-a5b9-7cf825a1496e/media/db_monitor_scripts.zip" lconnwikiparamwikiattachment="db_monitor_scripts.zip" target="_blank">here</a>.</p>
+
+<h2 dir="ltr">Sample Output</h2>
+
+<p dir="ltr">Sample output is attached <a href="https://w3-connections.ibm.com/wikis/form/api/wiki/1879f4b2-a135-4b6b-b50a-cff447409289/page/87e447f5-c07f-47b1-b22a-e06267514f39/attachment/54a3828e-20ae-435a-a5f0-87ee7ce161da/media/db_monitor_sample_output.zip" lconnwikiparamwikiattachment="db_monitor_sample_output.zip" target="_blank">here</a>. Below is a sample section from the main report:</p>
+
+<p dir="ltr"><span style="font-size:11px;"><span style="font-family:courier new,courier,monospace;">&nbsp;&nbsp; *******************************************************************<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; 
+STATEMENTS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ : TOTAL RUN DATA&nbsp; *&nbsp;&nbsp; PER SECOND DATA&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; *******************************************************************<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+Commits&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 26114 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 435.23 &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+Rollback&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .00 &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+Select&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 95419 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 1590.31 &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * Update/Insert/Delete&nbsp;&nbsp;&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5195
+ 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 86.58 &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+DDL&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 1 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .01 &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * Failed 
+SQL&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .00 &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * Dynamic SQL (Fetch.Open, 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 100433 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 1673.88 &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; *&nbsp; Prepare,Close,Describe) 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ *<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * Static 
+SQL&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 26114 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 435.23 &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; *******************************************************************<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; ROW ACCESS<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; *******************************************************************<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+ROWS_READ&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 76000 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 1266.66 &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+ROWS_SELECTED&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1228067 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+20467.78 &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * ROWS READ/SELECTED RATIO 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .06 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * PREFETCH_WAIT_TIME msecs 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+ROWS_DELETED&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .00 &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+ROWS_INSERTED&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 11956 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 199.26 &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+ROWS_UPDATED&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+1133 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 18.88 &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; *******************************************************************<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; BUFFER POOL<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; *******************************************************************<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * POOL_ASYNC_DATA_READS&nbsp;&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .00 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * POOL_ASYNC_DATA_WRITES&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 9 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .15 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * POOL_ASYNC_INDEX_READS&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .00 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * POOL_ASYNC_INDEX_WRITES&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 10 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .16 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * POOL_INDEX_L_READS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 246995 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+4116.58 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * POOL_INDEX_P_READS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 8 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .13 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * BP INDEX HIT RATIO %&nbsp;&nbsp;&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 99.90 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+POOL_INDEX_WRITES&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 10 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .16 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * SynchronousIndex Writes 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .00 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+POOL_DATA_L_READS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 60613 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+1010.21 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+POOL_DATA_P_READS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 1 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .01 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * BP DATA HIT RATIO %&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 99.00 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+POOL_DATA_WRITES&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 9 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .15 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * Synchronous Data Writes&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .00 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * POOL_TEMP_DATA_L_READS&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 27878 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 464.63 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * POOL_TEMP_DATA_P_READS&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .00 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * BP TEMP DATA HIT RATIO%&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 99 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * POOL_TEMP_INDEX_L_READS&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .00 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * POOL_TEMP_INDEX_P_READS&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .00 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * BP TEMP INDEX HIT RATIO% 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+DATA+TEMP+INDEX&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ PREAD/COMMIT 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .00 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * DATA+INDEX PWRITE/COMMIT 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .00 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * POOL_READ_TIME msecs&nbsp;&nbsp;&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 10 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * POOL_WRITE_TIME msecs&nbsp;&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 2 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * POOL_NO_VICTIM_BUFFER&nbsp;&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .00 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * POOL_DRTY_PG_STEAL_CLNS&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .00 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+POOL_DRTY_PG_STEAL_CLNS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; *&nbsp;&nbsp;&nbsp; per 1000 
+Commits&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .00 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; *******************************************************************<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; NON BUFFER POOL DIRECT IO ACTIVITY<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; *******************************************************************<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+DIRECT_WRITES&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 94 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 1.56 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+DIRECT_WRITE_REQS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 47 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .78 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * AVG DIRECT_WRITE_SIZE&nbsp;&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 1 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+DIRECT_READS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+2114 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 35.23 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+DIRECT_READ_REQS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 225 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 3.75 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * AVG DIRECT_READ_SIZE&nbsp;&nbsp;&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 9 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; *******************************************************************<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; LOCK DATA<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; *******************************************************************<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * CURRENT LOCKS_HELD&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 5 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+LOCK_WAITS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 36 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .60 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * LOCK_WAIT_TIME msecs&nbsp;&nbsp;&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 133 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; *&nbsp; msecs per LOCK_WAIT&nbsp;&nbsp;&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 3 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+LOCK_WAIT_TIME&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ * &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; *&nbsp; per 1000 Commits, msecs 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 5 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+LOCK_TIMEOUTS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .00 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+DEADLOCKS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .00 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+LOCK_TIMEOUTS+DEADLOCKS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; *&nbsp;&nbsp;&nbsp; per 1000 
+Commits&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; *******************************************************************<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; SORT DATA<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; *******************************************************************<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+TOTAL_SORTS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+6945 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 115.75 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+SORT_OVERFLOWS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .00 *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * TOTAL_SORT_TIME msecs&nbsp;&nbsp;&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * TOTAL_SORT_TIME/COMMITS&nbsp; 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0 
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ *&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; *******************************************************************</span></span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="font-size:11px;"><span style="font-family:courier new,courier,monospace;">******************** TOP 20 TABLE SCANS ***********************<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+SCHEMA&nbsp;&nbsp;&nbsp;&nbsp; 
+TABLE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ SCANS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+/Sec&nbsp;&nbsp;&nbsp;&nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+---------- -------------------- ------------ ----------<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+CFFACT&nbsp;&nbsp;&nbsp;&nbsp; 
+FRAUD_ASSESSMENT_CON&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+3053&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 50&nbsp;&nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+CFCONFIG&nbsp;&nbsp; 
+PUBLISH&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 3053&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 50&nbsp;&nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+CFCONFIG&nbsp;&nbsp; 
+ASSESSMENT_ACTION_TY&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 420&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+CFCONFIG&nbsp;&nbsp; 
+ASSESSMENT_ACTION_VA&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 293&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 4&nbsp;&nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+CFFACT&nbsp;&nbsp;&nbsp;&nbsp; 
+OBJECT_TYPE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 241&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 4&nbsp;&nbsp;
+ </span></span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="font-size:11px;"><span style="font-family:courier new,courier,monospace;">******************** TOP 20 ROWS READ ***********************<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+SCHEMA&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+TABLE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ ROWS_READ&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+/Sec&nbsp;&nbsp;&nbsp;&nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+-------------------- -------------------- --------------- ----------<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+CFFACT&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+FRAUD_ASSESSMENT_CON&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 18318&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 305&nbsp;&nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+CFCONFIG&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+SYSTEM_PROPS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 6106&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 101&nbsp;&nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+CFFACT&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+OBJECT_TYPE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 5704&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 95&nbsp;&nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+CFFACT&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+T_INDIVIDUAL&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 3053&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 50&nbsp;&nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+CFFACT&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+T_PARTY&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 3053&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 50&nbsp;&nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+CFFACT&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+T_PARTY_NAME&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 3053&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 50&nbsp;&nbsp; </span></span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="font-size:11px;"><span style="font-family:courier new,courier,monospace;">&nbsp;************************* CONTAINER ********************************************************************<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;* 
+TBSP_NAME&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ : &nbsp;&nbsp; &nbsp; USERSPACE1 &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;* 
+TPSP_ID&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ : &nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 2<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp; * 
+CONTAINER_NAME&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; : 
+&nbsp;&nbsp; &nbsp;&nbsp; 
+/cfdb/data/cfdb/db2inst2/NODE0000/CFDB/T0000002/C0000000.LRG&nbsp; 
+&nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp; * 
+CONTAINER_ID&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ : &nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp; * CONTAINER_TYPE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; : &nbsp;&nbsp; &nbsp;&nbsp; FILE_EXTENT_TAG &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp; * 
+ACCESSIBLE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ : &nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 1<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp; * 
+MEMBER&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ : &nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp; * 
+STRIPE_SET&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ : &nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp; * FILE_SYSTEM 
+ID&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; : &nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 64777<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp; * FILE_SYSTEM SIZE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; : &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 294167937024<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp; * FILESYSTEM_USED&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ : &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 47629844480<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp; * 
+TOTAL_PAGES&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ : &nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 63488<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp; * 
+USABLE_PAGES&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ : &nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 63456<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp; ------------------------- Performance Data ---------------------------------------------------<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp; * 
+DIRECT_READS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ : &nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0&nbsp; * DR/SEC :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp; * 
+T_DR_MSECS 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+0&nbsp; * MSECS/DR :&nbsp;&nbsp;&nbsp;&nbsp; 0<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp; * 
+DIRECT_WRITES&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ : &nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0&nbsp; * DW/SEC :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp; * 
+T_DW_MSECS 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+0&nbsp; * MSECS/DW :&nbsp;&nbsp;&nbsp;&nbsp; 0<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp; * PAGES_READ (Physical)&nbsp;&nbsp; : &nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 9&nbsp; * PR/SEC :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp; * 
+T_RD_MSECS :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 14&nbsp; * MSECS/RD :&nbsp;&nbsp;&nbsp;&nbsp; 1<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp; *&nbsp; (Data, Index, XML)&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp; * 
+PAGES_WRITTEN&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ : &nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0&nbsp; * PW/SEC :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp; * 
+T_WR_MSECS 
+:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+0&nbsp; * MSECS/WR :&nbsp;&nbsp;&nbsp;&nbsp; 0<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+VECTORED_IOS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ : &nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0&nbsp; * IO/SEC :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; *&nbsp; (Sequential Prefetches) &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * PAGES_FROM_VECTORED_IOS : &nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0&nbsp; * PG/SEC :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * 
+BLOCK_IOS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ : &nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0&nbsp; * IO/SEC :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; * PAGES_FROM_BLOCK_IOS&nbsp;&nbsp;&nbsp; : &nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 0&nbsp; * PG/SEC :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0</span></span></p>
+
+<h2 dir="ltr">Installing the Tool</h2>
+
+<h3 dir="ltr"><strong sandbox="allow-forms allow-same-origin allow-scripts allow-popups">Prerequisites</strong></h3>
+
+<p dir="ltr"><span style="color:#008000;">1. sysstat package is installed. Check using 'yum list installed sysstat'<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; The package can be installed from here: </span><a href="http://sebastien.godard.pagesperso-orange.fr/download.html"><span style="color:#0000ff;">http://sebastien.godard.pagesperso-orange.fr/download.html</span></a><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#008000;">&nbsp;&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp; Once installed, increase the frequency of background stats collection from the default 10 min to 1 min<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp; Edit the file '/etc/cron.d/sysstat' and configure sa1 as follows<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; &nbsp;</span><span style="color:#0000ff;"> * * * * * root /usr/lib64/sa/sa1 1 1</span></p>
+
+<p dir="ltr"><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#008000;">2. Turn on DB monitor switches for each instance to be monitored.<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; If these switches are not enabled some of the report statistics will be zero<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; You can check if they have been set with 'db2 get dbm cfg | grep dft_mon'<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; To enable:</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#0000ff;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; db attach to &lt;instance_name&gt;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; db2 update dbm cfg using dft_mon_bufpool ON<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; db2 update dbm cfg using dft_mon_lock ON<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; db2 update dbm cfg using dft_mon_stmt ON<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; db2 update dbm cfg using dft_mon_table ON<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; db2 update dbm cfg using dft_mon_timestamp ON<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; db2 update dbm cfg using dft_mon_uow ON<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; db2 update dbm cfg using dft_mon_sort ON</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#008000;">&nbsp;&nbsp; Restart the instance:</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#0000ff;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; db2stop force<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; db2start</span></p>
+
+<p dir="ltr"><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#008000;">&nbsp;3. (optional) Install DB2's explain facility in the databases to be monitored.<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; If installed, the utility will export Explain Plans for the top 15 slowest-executing statements</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#008000;">&nbsp;&nbsp; Example for DB2 11.1:</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;<span style="color:#0000ff;"> db2 connect to &lt;dbname&gt;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; db2 -ntf /opt/ibm/db2/V11.1/misc/EXPLAIN.DDL<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; db2 connect reset</span></p>
+
+<p dir="ltr"><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#008000;">4. (optional) Install the 'unix2dos' utility if you plan to view the output in Windows<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;</span><span style="color:#0000ff;">&nbsp; yum install unix2dos</span></p>
+
+<h3 dir="ltr"><strong sandbox="allow-forms allow-same-origin allow-scripts allow-popups">Setup</strong></h3>
+
+<p dir="ltr"><span style="color:#008000;">1. Create script directory ($scriptDir) and copy the sh and sql scripts into it.<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+2. Execute the following commands on the contents of the script directory:</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#0000ff;">&nbsp;&nbsp; dos2unix $scriptDir/*<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; chmod -R 755 $scriptDir<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; chmod +x $scriptDir/*.sh</span></p>
+
+<h3 dir="ltr">Description</h3>
+
+<p dir="ltr">&nbsp;&nbsp; <span style="color:#008000;">The DB monitor tool uses a diff approach to capture SQL activity during the monitor period only<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; If the load&nbsp; you are monitoring is constant over the 
+duration of a test you can simply start monitoring before the test<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; and set the monitor duration to the duration of the test, or slightly longer</span></p>
+
+<p dir="ltr"><span style="color:#008000;">&nbsp;&nbsp; If varying loads are applied in phases you can configure the tool to match those phases.<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; Output files will be generated for each monitor phase (_1, _2, _3, etc)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; For example, given the following load scenario:</span></p>
+
+<p dir="ltr"><span style="color:#800080;">&nbsp;&nbsp; | ramp up to 10 users over 1 min | hold at 10 users for 20 mins |<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+...&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | ramp up to 20 users over 1 min
+ | hold at 20 users for 20 mins |</span></p>
+
+<p dir="ltr"><span style="color:#008000;">&nbsp;&nbsp; You can configure the DB monitoring to synchronize with the hold phases as follows:</span></p>
+
+<p dir="ltr"><span style="color:#0000ff;">&nbsp;&nbsp; dbmon.sh -s 1200 -i 60 -n 2 -c &lt;instance&gt; -u &lt;user&gt; -p &lt;password&gt; -d 'DB1,DB2'</span></p>
+
+<p dir="ltr"><span style="color:#008000;">&nbsp;&nbsp; Output files will be saved to /var/log/db/mon/XX/DBLIST/, where XX is the 2-digit day number<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; For example: /var/log/db/mon/24/DB1_DB2/DB1_DB2_0820_0958.zip</span></p>
+
+<p dir="ltr">---------------</p>
+
+<p dir="ltr">Note that the script should be run as <span style="color:#0000FF;">root</span>. It will in turn invoke the script '<span style="color:#0000CD;">dbmon_report.sh</span>'
+ as the specified (local) database user. The list of databases to be 
+monitored should be in quotes and separated by commas with no spaces (as
+ in the example above). The script will also execute <span style="color:#0000FF;">iostat, mpstat </span>(from the sysstat suite) and <span style="color:#0000FF;">top </span>for the duration of the test. A log of the script execution will be placed in the output directory.</p>
+
+<p dir="ltr">If you are monitoring catalogued databases from a remote server that has DB2 client tools installed, <span style="color:#0000ff;">iostat</span>/<span style="color:#0000ff;">mpstat</span>/<span style="color:#0000ff;">top</span> data will be for the client machine, so can be ignored.<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+-------------</p>
+
+<h3 dir="ltr">Usage Statement</h3>
+
+<p dir="ltr"><img id="1569397452201_0" src="Database%20Maintenance%20and%20Monitoring%20Scripts_files/editor_image_6d304184-6739-469b-8ae5-5c570ef1a6ec.png" width="775" height="423"></p>
+
+<h3 dir="ltr">Sample Output</h3>
+
+<p dir="ltr"><img id="1568718555612_0" src="Database%20Maintenance%20and%20Monitoring%20Scripts_files/editor_image_9093dd39-68de-4693-83e8-3baf4fc2d0a9.png"></p>
+
+<h2 dir="ltr">Executing Individual Scripts</h2>
+
+<p dir="ltr">Some of the individual sql scripts can usefully be run on their own. For example:</p>
+
+<h3 dir="ltr"><strong sandbox="allow-forms allow-same-origin allow-scripts allow-popups">1. View stats for currently executing queries</strong></h3>
+
+<p dir="ltr"><span style="color:#0000CD;">db2 connect to &lt;DBNAME&gt;</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">db2 -ntf getmoncurrentsql.sql &gt; current_&lt;dbname&gt;.txt</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">db2 connect reset</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">This is useful to monitor slow-running or potentially deadlocked queries.</p>
+
+<h3 dir="ltr"><strong sandbox="allow-forms allow-same-origin allow-scripts allow-popups">2. View Connection Details</strong></h3>
+
+<p dir="ltr"><span style="color:#0000CD;">db2 connect to &lt;DBNAME&gt;</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">db2 -ntf getdbconnectionsinfo.sql &gt; connections_&lt;dbname&gt;.txt</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">db2 connect reset</span></p>
+
+<h3 dir="ltr"><strong sandbox="allow-forms allow-same-origin allow-scripts allow-popups">3. View stats for recently completed queries</strong></h3>
+
+<p dir="ltr"><span style="color:#0000CD;">db2 connect to &lt;DBNAME&gt;</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">db2 -ntf getdbsqlcache.sql &gt; cache_&lt;dbname&gt;.txt</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">db2 connect reset</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">From the output of this script you can get information such
+ as the time when the query was first compiled, how often a query has 
+been executed, various execution component times, rows read/returned 
+(ideally should be &lt;10), average rows read per execution, deadlocks, 
+physical table/index disk reads, statement text, etc. More information 
+about the fields included in the output can be found <a href="https://www.ibm.com/support/knowledgecenter/en/SSEPGG_10.5.0/com.ibm.db2.luw.sql.rtn.doc/doc/r0055017.html" target="_blank">here</a>
+ (some of the field names in the output will have been renamed, or used 
+to derive new fields, so refer to getdbsqlcache.sql when correlating). 
+The key timing fields are as follows:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#800080;">AVG_CPU_USEC</span>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; time in microseconds to execute a statement (not including any wait time)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#800080;">AVG_ACT_MSEC</span>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ total time in milliseconds to execute statement, including processor 
+queue time/IO wait time/Lock wait time<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#800080;">AVGACT_WT_MSEC</span>:&nbsp;&nbsp;&nbsp; additional overhead due to IO wait time and/or lock wait time (included in AVG_ACT_MSEC value)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#800080;">AVGLOCK_WT_MSEC</span>: overhead due to lock wait time (included in AVG_ACT_MSEC value).<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#800080;">ASTMT_EXEC_MSEC</span>:&nbsp; this value includes any additional time due to stored procedure calls in the statement (AROUTINE_TIME_MSECS).</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">If&nbsp; you want to measure the rate at which a query or queries are being executed flush the package cache first:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#0000CD;">db2 connect to &lt;DBNAME&gt;</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">db2 flush package cache dynamic</span></p>
+
+<p dir="ltr"><span style="color:#006400;">***Run tests for known period of time***</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">db2 -ntf getdbsqlcache.sql &gt; cache_&lt;dbname&gt;.txt</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">db2 connect reset</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">Now, the EXECS time and the test duration can be used to 
+work out average query rates. If you know that particular queries are 
+caused by a specific service you can run flush the cache, execute the 
+service, then capture the stats to see what queries are executed. 
+Sometimes a flush doesn't eject all entries from the cache, so you 
+should confirm when the entry was added to the cache from the 
+'INSERT_TIMESTAMP' column.</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">The output can also be imported into a Lotus Symphony spreadsheet using the following settings:</p>
+
+<p dir="ltr"><img alt="" id="1529509188458_0" src="Database%20Maintenance%20and%20Monitoring%20Scripts_files/editor_image_4ccf6844-ff2f-45b1-8e9e-9236726d7210.png" width="665" height="489"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">The rows can then be sorted in descending/ascending order 
+on any of the columns, or formatted to highlight issues, etc. An example
+ is attached <a href="https://w3-connections.ibm.com/wikis/form/api/wiki/1879f4b2-a135-4b6b-b50a-cff447409289/page/87e447f5-c07f-47b1-b22a-e06267514f39/attachment/ef74c259-9ae0-49ab-9ba5-6f99216d471d/media/iocdata_cache_sample.ods" lconnwikiparamwikiattachment="iocdata_cache_sample.ods" target="_blank">here</a>.</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<h1 dir="ltr"><a id="Maintenance" name="Maintenance"></a>DB2 Maintenance Script for Linux</h1>
+
+<p dir="ltr">Note that this script is not intended as a substitute for 
+DB2's maintenance scheduler. However, you may find it useful under 
+certain circumstances.</p>
+
+<p dir="ltr">This script will run maintenance on the specified schemas 
+in the specified database. It's recommended to run a script like this on
+ a daily basis, and after large data loads, to maintain the health of a 
+database and consistent performance.</p>
+
+<ol dir="ltr">
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups">It executes REORGCHK to check which tables in the specified schemas require reorganization</li>
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups">For
+ those tables indicated as requiring a REORG it checks the size of the 
+table. If the size is below a (configurable) threshold, the table is 
+reorganized. Otherwise, the REORG is skipped.</li>
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups">It
+ executes RUNSTATS on all tables in the specified schema with basic and 
+distribution stats collected for all columns and extended index stats. 
+It also sets a profile so that auto runstats uses the same options</li>
+	<li sandbox="allow-forms allow-same-origin allow-scripts allow-popups">Performs a full rebind of all packages in the specified database.</li>
+</ol>
+
+<p dir="ltr">&gt;&gt;&gt;&gt;&gt;</p>
+
+<p dir="ltr"><strong sandbox="allow-forms allow-same-origin allow-scripts allow-popups">Note:</strong>
+ step 4 (db2rbind) can hang on occasion. When that happens write access 
+to tables may be blocked and applications may stop working. To kill the 
+hanging application first run 'db2 list applications' as below to 
+identify the application ID (in this case 15288):</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#0000CD;">&nbsp;db2 list applications | grep db2rbind</span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">DB2I1OWN 
+db2rbind&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+15288&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+*LOCAL.db2i1own.180529004227&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ IOCDB&nbsp;&nbsp;&nbsp; 1</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">Then, run:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#0000CD;">db2 "force application (15288)"</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">To reduce the risk of the rebind command hanging close 
+application connections (e.g., shut down Liberty) before running the 
+maintenance script.</p>
+
+<p dir="ltr">&lt;&lt;&lt;&lt;&lt;&lt;</p>
+
+<p dir="ltr">The script could be scheduled to run on a regular basis using a cron task.</p>
+
+<p dir="ltr">As an alternative to this approach you can&nbsp; schedule 
+an offline maintenance period in DB2. The disadvantage is that you can't
+ REBIND packages using DB2's auto maintenance, so this would have to be 
+scheduled manually to happen after REORG/RUNSTATS have completed.</p>
+
+<p dir="ltr">If packages are used extensively in a database it's 
+essential to rebind them on a regular basis to take advantage of updated
+ statistics. By default, packages are bound with the 'REOPT NONE' 
+option, which means that access plans are hard-coded during initial 
+compilation of the package. As data is added to a DB the access plan 
+will become increasingly suboptimal and degrade query performance.</p>
+
+<p dir="ltr">The script can be downloaded from <a href="https://w3-connections.ibm.com/wikis/form/api/wiki/1879f4b2-a135-4b6b-b50a-cff447409289/page/87e447f5-c07f-47b1-b22a-e06267514f39/attachment/567bd00e-8d30-4a83-acd0-9ba7a7d6c4b7/media/db_maint.sh" lconnwikiparamwikiattachment="db_maint.sh" target="_blank">here</a>. Make script executable and run dos2unix:<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;</p>
+
+<p dir="ltr"><span style="color:#0000FF;">dos2unix db_maint.sh<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+chmod 777 db_maint.sh</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;</p>
+
+<p dir="ltr"><span style="color:#008000;">USAGE: ./db_maint.sh -d DBNAME -s 'SCHEMA1 SCHEMA2...' -r REORGTHRESH<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Required:<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp; -d: database name<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp; -s: space-separated list of schema names<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Optional:<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp; -r: reorg threshold in MB (only reorg tables below this size, default 100MB)</span></p>
+
+<p dir="ltr">It's good practice to include the SYSIBM schema when doing 
+maintenance as system tables can become significantly de-fragmented over
+ time.</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">Example (run as db2i1own):</p>
+
+<p dir="ltr"><span style="color:#0000FF;"><span style="font-size: 12px;"><span style="font-family: courier new,courier,monospace;">./db_maint.sh -d WIHDB -s 'WIH SYSIBM'</span></span></span></p>
+
+<p dir="ltr">Example (run as root):</p>
+
+<p dir="ltr"><span style="font-family:courier new,courier,monospace;"><span style="color: rgb(0, 0, 205);">su - db2i1own -c "/</span><span style="color:#B22222;">&lt;path_to_db_maint_script&gt;</span><span style="color: rgb(0, 0, 205);">/db_maint.sh -d WIHDB -s 'WIH CFG VDS EAM SYSIBM'</span><span style="color: rgb(0, 0, 205);">"</span></span></p>
+
+<p dir="ltr"><span style="font-family:arial,helvetica,sans-serif;"><span style="font-size: 12px;">If setting up a cron task configure it as <em sandbox="allow-forms allow-same-origin allow-scripts allow-popups">root</em> user as follows (this example runs it every day at 2am):</span></span></p>
+
+<p dir="ltr"><span style="color:#0000CD;">0 2 * * * </span><span style="font-family:courier new,courier,monospace;"><span style="color: rgb(0, 0, 205);">su - db2i1own -c "/</span><span style="color:#B22222;">&lt;path_to_db_maint_script&gt;</span><span style="color: rgb(0, 0, 205);">/db_maint.sh -d WIHDB -s 'WIH SYSIBM'</span><span style="color: rgb(0, 0, 205);">"</span></span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<h1 dir="ltr"><a id="Table Sizes" name="Table Sizes"></a>List Table/Index Sizes and Row Count for Tables</h1>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">This script (<a href="https://w3-connections.ibm.com/wikis/form/api/wiki/1879f4b2-a135-4b6b-b50a-cff447409289/page/87e447f5-c07f-47b1-b22a-e06267514f39/attachment/69a57fb9-f5bf-4629-9cd6-2228f8360d14/media/db_tablesizes.sh" lconnwikiparamwikiattachment="db_tablesizes.sh" target="_blank">link</a>)
+ can be used to list the row count of each table in the listed schemas, 
+along with the disk space allocated to each table and its indexes.</p>
+
+<p dir="ltr"><span style="color:#006400;"># USAGE: ./db_tablesizes.sh -d DBNAME -s 'SCHEMA1 SCHEMA2...'<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+# Required:<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+#&nbsp;&nbsp; -d: database name<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+#&nbsp;&nbsp; -s: space-separated list of schema names<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+# Optional:</span></p>
+
+<p dir="ltr">Sample invocation (list information for all tables in the schemas WIH and WCP in the database WIHDB):</p>
+
+<p dir="ltr"><span style="color:#0000CD;">db_tablesizes.sh -d WIHDB -s 'WIH WCP'</span></p>
+
+<p dir="ltr">Sample output:</p>
+
+<p dir="ltr"><span style="color:#800080;">-----------------------------------------------------------------------------<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Starting analysis of table sizes. Date and time: Tue Jun 23 22:12:48 IST 2015<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+DBNAME=wihdb<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+SCHEMAS=wih wcp cso sunshine eam<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+-----------------------------------------------------------------------------</span></p>
+
+<p dir="ltr"><span style="color:#800080;">&nbsp;&nbsp; Database Connection Information</span></p>
+
+<p dir="ltr"><span style="color:#800080;">&nbsp;Database server&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = DB2/LINUXX8664 10.1.4<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;SQL authorization ID&nbsp;&nbsp; = DB2INST2<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;Local database alias&nbsp;&nbsp; = WIHDB</span></p>
+
+<p dir="ltr"><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#800080;">&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&gt;&gt; SCHEMA=WIH</span></p>
+
+<p dir="ltr"><span style="color:#800080;">&nbsp;&nbsp; 
+TABLE=ASSET_INST&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; ROWCOUNT=4986<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; TABLESIZE=&nbsp;&nbsp; 6400<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; INDEXSIZE=&nbsp; 1280</span></p>
+
+<p dir="ltr"><span style="color:#800080;">&nbsp;&nbsp; 
+TABLE=ASSET_INST_EXT_CITYNAME_RAINGAUGE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; ROWCOUNT=0<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; TABLESIZE=&nbsp; 512<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; INDEXSIZE=&nbsp; 512</span></p>
+
+<p dir="ltr"><span style="color:#800080;">&nbsp;&nbsp; 
+TABLE=ASSET_LOCATION&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; ROWCOUNT=4986<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; TABLESIZE=&nbsp;&nbsp; 1792<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; INDEXSIZE=&nbsp;&nbsp; 1024</span></p>
+
+<p dir="ltr"><span style="color:#800080;">&nbsp;&nbsp; 
+TABLE=ASSET_STATUS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; ROWCOUNT=0<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; TABLESIZE=&nbsp;&nbsp; 512<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; INDEXSIZE=&nbsp;&nbsp; 512</span></p>
+
+<p dir="ltr"><span style="color:#800080;">&nbsp;&nbsp; 
+TABLE=ASSET_TYPE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ &nbsp;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; ROWCOUNT= 24<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; TABLESIZE=&nbsp;&nbsp; 512<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp; INDEXSIZE=&nbsp;&nbsp; 512</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">Table and Index size are in kilobytes.</p>
+
+<p dir="ltr">Before using the script run '<span style="color:#0000CD;">dos2unix db_tablesizes.sh</span>' followed by '<span style="color:#0000CD;">chmod 0777 db_tablesizes.sh</span>'.</p></div></body></html>

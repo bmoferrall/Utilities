@@ -1,0 +1,228 @@
+<html><head><title>WOW XML Generation Tools</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style type="text/css">TABLE { border-collapse: collapse; border-top: 1px; border-left: 1px; border-style: solid; margin: 4px; }TD, TH { border-bottom: 1px; border-right: 1px; border-style: solid; padding: 4px; }TH { background-color: #D8D8D8; }</style></head><body><div sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><h1 dir="ltr">Tool to Generate Alert and Work Order XML Files for Ingestion</h1>
+
+<p dir="ltr">This is a Perl script that will work on Windows or Unix and uses only standard Perl modules.</p>
+
+<p dir="ltr">Download <a href="https://w3-connections.ibm.com/wikis/form/api/wiki/1879f4b2-a135-4b6b-b50a-cff447409289/page/8d1e9b09-09f6-4168-9f65-ca8206ae3fba/attachment/153c6471-aac0-4ef6-b871-dcd347c91677/media/genXmlForWOWIngestion.pl" lconnwikiparamwikiattachment="genXmlForWOWIngestion.pl" target="_blank">here</a>.</p>
+
+<p dir="ltr"><span style="color:#006400;">Usage: [perl]</span> <span style="color:#006400;">genXmlForWOWIngestion.pl [-h] | [-x (alert|wo|so) -n number_of_records</span></p>
+
+<p dir="ltr"><span style="color:#006400;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ -s start_record -t tenant -d days_in_past -i increment_in_seconds -u]<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Required parameters:<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Optional parameters:<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; -x: type of xml to output, alert=alerts, wo=work orders, so=service orders (default 'alert')<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; -n: number of records (default 100)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; -s: start record number or start record ID (default 1)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; -t: Tenant (default VDS_LILLE)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; -d: Days in past from which to start generating timestamps (default 25)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; -i: Number of seconds to increment timestamps for each alert (default 180)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; -u: Update instead of insert</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;<span style="color:#006400;"> -o: String to append to the base output file name</span></p>
+
+<p dir="ltr"><span style="color:#006400;">&nbsp;----------------------------------------------------------------------------------------------------------------------------------<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Example 1: ./genXmlForWOWIngestion.pl -x wo -n 10000 -s 100 -t VDS_LYON<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Generate 10,000 Workorder XMLs for tenant VDS_LYON, starting with ID 100</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<h3 dir="ltr">Sample Alert</h3>
+
+<div dir="ltr" id="xmlOutputWrapper">
+<pre class="xml" id="xmlOutput"><img alt="" id="1506075896540_0" src="WOW%20XML%20Generation%20Tools_files/editor_image_bb7f40f8-8bf4-4dff-8f32-a0f6c05a866d.png" width="773" height="326"><span style="color:#800080;"><code class="hljs">
+</code></span></pre>
+</div>
+
+<h3 dir="ltr">Sample Work Order</h3>
+
+<div dir="ltr" id="xmlOutputWrapper">
+<pre class="xml" id="xmlOutput"> <img alt="" id="1506075808752_0" src="WOW%20XML%20Generation%20Tools_files/editor_image_2817058b-9686-434e-84c2-a69089b6722c.png" width="751" height="407"><code class="hljs"><span style="color:#800080;">
+</span></code><img alt="" id="1506075965098_0" src="WOW%20XML%20Generation%20Tools_files/editor_image_f60af160-f4a0-4051-8fa1-4dc720660e40.png" width="799" height="238"></pre>
+
+<h1 sandbox="allow-forms allow-same-origin allow-scripts allow-popups">Tool to Generate Reading XML Files for Ingestion</h1>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups">This is a Perl script that will work on Windows or Unix and uses only standard Perl modules.</p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups">Download <a href="https://w3-connections.ibm.com/wikis/form/api/wiki/1879f4b2-a135-4b6b-b50a-cff447409289/page/8d1e9b09-09f6-4168-9f65-ca8206ae3fba/attachment/0e4e0e39-6035-4b10-b647-b8666f20410e/media/genReadingsForWOWIngestion.pl" lconnwikiparamwikiattachment="genReadingsForWOWIngestion.pl" target="_blank">here</a>.</p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="color:#006400;">Usage:
+ [perl] genReadingsForWOWIngestion.pl [-h] | -f input_file [-n 
+iterations -d days_in_past -i increment_in_seconds -t tenant]<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Required parameters:<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; -f: Input file, with format as follows:<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Asset Type ID, External Asset
+ ID, Measurement Type ID, Range Start, Range End, Integer(0|1)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Examples:<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Esri_wHydrant,607456,ENABLED,0,2,1<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Esri_wMain,607456,PRESSURE,-10.5,50,0</span></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="color:#006400;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ The script will generate a reading value between Range Start and Range 
+End, converting to Integer if the last value is 1<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Optional parameters:<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; -n: Number of iterations to generate readings for the input file (default 1)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; -d: Number of Days in Past. Generated reading time stamps will start from this point (default 10)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; -i: Increment in seconds. The timestamp for each 
+block of readings is incremented by this amount (default 900)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; -t: Tenant (default VDS_LILLE)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;----------------------------------------------------------------------------------------------------------------------------------<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Example 1: ./genReadingsForWOWIngestion.pl -f Hydrants1.txt -n 5 -d 50 -i 3600 -t VDS_LYON<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Load template for readings 
+from Hydrants1.txt, generate 5 times the number of entries in 
+Hydrants1.txt<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+starting with a timestamp 50 days ago and incrementing 1 hour for each 
+block of entries in Hydrants1.txt</span></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups">&nbsp;</p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups">You must pass in a template file with the following information:</p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="color:#006400;">Asset Type ID, External Asset ID, Measurement Type ID, Range Start, Range End, Integer(0|1)</span></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups">&nbsp;</p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups">For example, the following will generate 0 or 1 for the ENABLED measurement type and Esri_wHydrant asset type:</p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="color:#A52A2A;">Esri_wHydrant,493548,ENABLED,0,2,1<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Esri_wHydrant,493554,ENABLED,0,2,1<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Esri_wHydrant,493606,ENABLED,0,2,1<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Esri_wHydrant,493545,ENABLED,0,2,1<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Esri_wHydrant,493553,ENABLED,0,2,1<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Esri_wHydrant,493605,ENABLED,0,2,1<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Esri_wHydrant,493550,ENABLED,0,2,1<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Esri_wHydrant,1601251,ENABLED,0,2,1</span></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups">Sample Readings generated from the above template:</p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><img alt="" id="1506075723982_0" src="WOW%20XML%20Generation%20Tools_files/editor_image_eb56cbd9-87d2-476b-8e83-d4ae31969ec2.png" width="710" height="348"></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups">&nbsp;</p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups">The following will generate a random float between 0 and 50 for the PRESSURE_1 measurement type and wReservoir asset type:</p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="color:#A52A2A;">wReservoir,1601251,PRESSURE_1,0,50,0<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+wReservoir,486569,PRESSURE_1,0,50,0<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+wReservoir,486570,PRESSURE_1,0,50,0<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+wReservoir,486571,PRESSURE_1,0,50,0<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+wReservoir,486572,PRESSURE_1,0,50,0<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+wReservoir,486573,PRESSURE_1,0,50,0</span></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups">Sample readings generated from the above example:</p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><img alt="" id="1506076098808_0" src="WOW%20XML%20Generation%20Tools_files/editor_image_cfb10f47-919a-46ad-8b20-f405f31078f1.png" width="712" height="348"></p>
+
+<h1 sandbox="allow-forms allow-same-origin allow-scripts allow-popups">Tool to Generate Asset XML Files for Ingestion</h1>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups">This is a Java program that should work equally well on Linux and Windows.</p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups">Download <a href="https://w3-connections.ibm.com/wikis/form/api/wiki/1879f4b2-a135-4b6b-b50a-cff447409289/page/8d1e9b09-09f6-4168-9f65-ca8206ae3fba/attachment/cd5e14f2-8a76-4172-bc84-10d30c0128bf/media/AssetXmlGenerator.jar" lconnwikiparamwikiattachment="AssetXmlGenerator.jar" target="_blank">here</a>.</p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="color:#006400;">Command arguments : &lt;FLOWTYPE&gt; &lt;USECASE&gt; &lt;TENANT&gt; &lt;GENERATED DATA SIZE&gt; &lt;INI&gt; [&lt;FILESUFFIX&gt;]<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+[FLOWTYPE]: ASSET|READINGS|WO|SO|ALERTS<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+[USECASE]: INSERT/UPDATE/DELETE<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+[TENANT]:tenant ID (e.g. VDS_LILLE).<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+[GENERATED DATA SIZE]: e.g. 100<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+[INI]:Initialisation file<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+[FILESUFFIX]:Optional suffix to base file name (default 1)</span></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="color:#006400;">Example:</span></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="color:#006400;">java -jar AssetXmlGenerator.jar asset insert VDS_LILLE 100 Esri.wHydrant.ini 1</span></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups">&nbsp;</p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups">The key parameter is an initialization file defining the content of the generated assets.</p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups">A couple of examples are shown below (grammar for each section is described by comments)</p>
+
+<h2 sandbox="allow-forms allow-same-origin allow-scripts allow-popups">Asset type Esri.wHydrant</h2>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="color:#800080;">[ASSETTYPE]</span></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="color:#000080;">Type=Esri.wHydrant</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#006400;">; For ExternalID and Label you can specify 
+%s to generate sequential number, starting with the value after the 
+semi-colon (or 1 default)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+; For ExternalID and Label you can specify %r to generate random number between 10,000 and 100,000</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#000080;">ExternalID=H%s;1<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Label=Hydrant %s;1<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Description=Hydrant</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#006400;">; Base Latitude;Delta Latitude;Base Longitude;Delta Longitude (default location around Lille)</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#000080;">Location=50.6033;0.06;2.9655;0.18</span></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#800080;">[MEASUREMENTS]</span></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="color:#006400;">; MeasurementName=Unit(can be blank, but leave semi-colon);acceptable min/max;caution min/max;critical min/max</span></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="color:#000080;">ENABLED=;0:-0.5/0.5;1:0.5/1.5;2:1.5/2.5</span></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="color:#800080;">[PROPERTIES]</span></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="color:#006400;">; Property definition types<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+; PropertyName=date;date format;initial year (will generate random date between jan 1 of this year and current date)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+; PropertyName=string;range:start_of_range,end_of_range (generate random number between start and end of range)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+; PropertyName=string;enum:value1,value2, ...&nbsp; (select random value from list of values)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+; PropertyName=double;start_of_range,end_of_range;unit (generate random value between start and end of range, unit is optional)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+; PropertyName=integer;start_of_range,end_of_range;unit (generate random
+ integer between start and end of range, unit is optional)</span></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="color:#000080;">INSTALLDATE=date;yyyy-MM-dd HH:mm:ss;2000<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+MANUFACTURER=string;enum:Manufacturer1,Manufacturer2,Manufacturer3<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+ENABLED=string;range:0,1<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+ACTIVEFLAG=string;enum:True,False<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+OWNEDBY=string;enum:Owner1,Owner2,Owner3<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+MAINTBY=string;enum:Maintainer1,Maintainer2,Maintainer3<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+DIAMETER=double;0,100;mm<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+TYPE=string;enum:Hydrant<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+FACILITYID=string;range:10000,100000</span></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups">&nbsp;</p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups">Sample XML based on the above:</p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><img alt="" id="1512039729456_0" src="WOW%20XML%20Generation%20Tools_files/editor_image_6199ab08-7c98-45d1-80db-97e0002cce17.png" width="835" height="453"></p>
+
+<h2 sandbox="allow-forms allow-same-origin allow-scripts allow-popups">Asset Type Esri.wSystemValve</h2>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="color:#800080;">[ASSETTYPE]</span></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="color:#000080;">Type=Esri.wSystemValve</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#006400;">; For ExternalID and Label you can specify 
+%s to generate sequential number, starting with the value after the 
+semi-colon (or 1 default)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+; For ExternalID and Label you can specify %r to generate random number between 10,000 and 100,000</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#000080;">ExternalID=SV%s;1<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Label=System Valve %s;1<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Description=System Valve</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#006400;">; Base Latitude;Delta Latitude;Base Longitude;Delta Longitude (default location around Lille)</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Location=50.6033;0.06;2.9655;0.18</p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="color:#800080;">[MEASUREMENTS]</span></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="color:#006400;">; MeasurementName=Unit(can be blank, but leave semi-colon);acceptable min/max;caution min/max;critical min/max</span></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="color:#000080;">CURROPEN=;0:-0.5/0.5;1:0.5/1.5;2:1.5/2.5</span></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="color:#800080;">[PROPERTIES]</span></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="color:#006400;">; Property definition types<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+; PropertyName=date;date format;initial year (will generate random date between jan 1 of this year and current date)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+; PropertyName=string;range:start_of_range,end_of_range (generate random number between start and end of range)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+; PropertyName=string;enum:value1,value2, ...&nbsp; (select random value from list of values)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+; PropertyName=double;start_of_range,end_of_range;unit (generate random value between start and end of range, unit is optional)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+; PropertyName=integer;start_of_range,end_of_range;unit (generate random
+ integer between start and end of range, unit is optional)</span></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><span style="color:#000080;">INSTALLDATE=date;yyyy-MM-dd HH:mm:ss;2000<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+CURROPEN=string;range:0,1<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+ACTIVEFLAG=string;enum:True,False<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+OWNEDBY=string;enum:Owner1,Owner2,Owner3<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+MAINTBY=string;enum:Maintainer1,Maintainer2,Maintainer3<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+DIAMETER=double;0,100;mm<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+FACILITYID=string;range:10000,100000</span></p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups">&nbsp;</p>
+
+<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups">&nbsp;</p>
+</div></div></body></html>

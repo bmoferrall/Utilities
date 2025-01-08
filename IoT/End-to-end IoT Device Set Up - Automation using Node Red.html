@@ -1,0 +1,318 @@
+<html><head><title>End-to-end IoT Device Set Up - Automation using Node Red</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style type="text/css">TABLE { border-collapse: collapse; border-top: 1px; border-left: 1px; border-style: solid; margin: 4px; }TD, TH { border-bottom: 1px; border-right: 1px; border-style: solid; padding: 4px; }TH { background-color: #D8D8D8; }</style></head><body><div sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><h1 dir="ltr">Introduction</h1>
+
+<p dir="ltr">This page describes the use of node-red to automate end-to-end device set up as described on<a href="https://console.bluemix.net/docs/services/IoT/GA_information_management/ga_im_index_scenario.html#scenario" rel="noopener noreferrer" target="_blank">&nbsp;this</a> Watson IoT page.</p>
+
+<p dir="ltr">The current version of the flows can be viewed <a href="http://dubperf-mongodb.mul.ie.ibm.com:1880/" rel="noopener noreferrer" target="_blank">here</a>.</p>
+
+<h1 dir="ltr">Steps</h1>
+
+<p dir="ltr">Briefly, the steps to complete device set up are as follows:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#0000cd;">&nbsp; 1. Create Device Type</span></p>
+
+<p dir="ltr"><span style="color:#0000cd;">&nbsp; 2. Create Device Instance</span></p>
+
+<p dir="ltr"><span style="color:#0000cd;">&nbsp; 3. Define a Schema for events</span></p>
+
+<p dir="ltr"><span style="color:#0000cd;">&nbsp; 4. Create a draft Event Type using the Schema</span></p>
+
+<p dir="ltr"><span style="color:#0000cd;">&nbsp; 5. Create a Physical Interface</span></p>
+
+<p dir="ltr"><span style="color:#0000cd;">&nbsp; 6. Add the Event Type to the Physical Interface</span></p>
+
+<p dir="ltr"><span style="color:#0000cd;">&nbsp; 7. Connect the Device Type to the Physical Interface</span></p>
+
+<p dir="ltr"><span style="color:#0000cd;">&nbsp; 8. Create a Schema for a Logical Interface</span></p>
+
+<p dir="ltr"><span style="color:#0000cd;">&nbsp; 9. Create a draft Logical Interface using the Schema</span></p>
+
+<p dir="ltr"><span style="color:#0000cd;">10. Add the Logical Interface to the Device Type</span></p>
+
+<p dir="ltr"><span style="color:#0000cd;">11. Define mappings between the Event and Logical Interface schema</span></p>
+
+<p dir="ltr"><span style="color:#0000cd;">12. Validate and Activate the Configuration</span></p>
+
+<p dir="ltr"><span style="color:#0000cd;">13. Publish an Event conforming to the schema in step 4</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">A more detailed description of the steps is documented <a href="https://w3-connections.ibm.com/wikis/form/api/wiki/1879f4b2-a135-4b6b-b50a-cff447409289/page/bd51178b-bdef-4085-8f17-540866690ee8/attachment/be8bd56e-2bef-4a13-a4c6-9a481443e09d/media/AlertsForLocationMaps.doc" lconnwikiparamwikiattachment="AlertsForLocationMaps.doc" target="_blank">here</a>.</p>
+
+<p dir="ltr">The APIs used in the above steps are described <a href="https://docs.internetofthings.ibmcloud.com/apis/swagger/v0002/state-mgmt.html" rel="noopener noreferrer" target="_blank">here</a>.</p>
+
+<p dir="ltr">The current version of the Event schema is attached <a href="https://w3-connections.ibm.com/wikis/form/api/wiki/1879f4b2-a135-4b6b-b50a-cff447409289/page/bd51178b-bdef-4085-8f17-540866690ee8/attachment/d8979650-59f4-4595-a67b-ea542c5d1df3/media/capAlertSchema_V4.json" lconnwikiparamwikiattachment="capAlertSchema_V4.json" target="_blank">here</a>. The current version of the Logical Interface schema is attached <a href="https://w3-connections.ibm.com/wikis/form/api/wiki/1879f4b2-a135-4b6b-b50a-cff447409289/page/bd51178b-bdef-4085-8f17-540866690ee8/attachment/ae9ee1e9-96c4-467d-bcfa-be12a0baa129/media/capAlertSchema_LI_V4.json" lconnwikiparamwikiattachment="capAlertSchema_LI_V4.json" target="_blank">here</a>.</p>
+
+<p dir="ltr">The current versions of the above Schemas are simplified to
+ use all String properties. This will likely evolve to use different 
+data types (such as dates).</p>
+
+<h2 dir="ltr">Mappings for the Logical Interface</h2>
+
+<p dir="ltr">IoT uses the Jsonata language (<a href="https://console.bluemix.net/docs/services/IoT/GA_information_management/mapping_expression_language.html#mapping_expression" rel="noopener noreferrer" target="_blank">link</a>)
+ to implement mappings between input events and an output logical 
+interface. The logical interface is used to describe the tables (names, 
+columns, data types) created in DB2. IoT creates the tables 
+automatically and uses the mapping definitions to transform and route 
+the input raw event data to DB2 (<a href="https://www.ibm.com/support/knowledgecenter/SSQP8H/iot/developing/data_access_db2.html" rel="noopener noreferrer" target="_blank">link</a>).</p>
+
+<p dir="ltr">This presents the possibility of implementing a data 
+source/receiver framework similar to what is implemented in IOC. The 
+mapping language and logical interfaces should make it possible, for 
+example, to implement minimum/key/extended properties.</p>
+
+<p dir="ltr">As an example, something like the following mapping might 
+generate a LASTUPDATE field (using the built-in now() function) if the 
+field is not present in the input event's payload:</p>
+
+<p dir="ltr"><span style="font-size:14px;"><span style="color:#006400;">"lastupdate": "$event.d.lastupdate?$event.d.lastupdate:$now()"</span></span></p>
+
+<p dir="ltr">The following mapping will do the same, this time applying a date format to the timestamp (this feature would require an <a href="https://github.com/jsonata-js/jsonata/issues/54" rel="noopener noreferrer" target="_blank">extension</a> to Jsonata):</p>
+
+<p dir="ltr"><span style="font-size:14px;"><span style="color:#006400;">"lastupdate": "$event.d.lastupdate?$event.d.lastupdate:$moment().format('YYYY-MM-DD hh:mm:ss.000')"</span></span></p>
+
+<p dir="ltr">Jsonata could be used to generate fields derived from other
+ fields; it could also be used to build derived values based on 
+aggregation over an interval such as a day.</p>
+
+<h1 dir="ltr">Details of node-red flow</h1>
+
+<p dir="ltr">The node-red flow uses a configuration file such as the following (the ID values are updated by the flow):</p>
+
+<p dir="ltr"><span style="color:#006400;">{<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "orgId": "9kpzic",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "deviceType": "CapAlertSender_V4",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "deviceDescription": "Device for transmitting/receiving CAP alerts V4",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "deviceId": "capAlertSender_V4",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "deviceToken": "Pa88w0rd",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "physicalInterfaceId": "5c1115c856b79c002a2f9156",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "physicalInterfaceName": "CAP Alert Sender Physical Interface V4",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "eventType": "CapAlert_V4",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "pathToEventSchema": "./IoT/LocationMap/capAlertSchema_V4.json",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "pathToLISchema": "./IoT/LocationMap/capAlertSchema_LI_V4.json",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "eventSchemaName": "capAlertSchema_V4",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "LISchemaName": "capAlertSchemaTest_LI_V4",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "eventSchemaId": "5c112d6356b79c002a2f9165",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "eventTypeId": "5c112d6856b79c002a2f9166",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "LISchemaId": "5c1116f156b79c002a2f9157",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "LIName": "CAP Alert Sender Logical Interface V4",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "LIAlias": "ICapAlertSender_V4",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "logicalInterfaceId": "5c11174facf90e002b4694b3",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "eventId": "capAlert_V4",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "authId": "a-9kpzic-cfbqvnuh2h",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "authPassword": "T-LN4Nd8onlBKol8s_",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "errorlog": "./IoT/LocationMap/error.log"<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+}</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">The flow operates broadly as follows:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#0000cd;">1. Load the current version of the configuration file</span></p>
+
+<p dir="ltr"><span style="color:#0000cd;">2. Each step in in the flow is traversed in sequence, as shown earlier.</span></p>
+
+<p dir="ltr"><span style="color:#0000cd;">3. If a step succeeds the flow
+ proceeds to the next step. If a step fails the flow aborts and writes 
+the relevant error message to an error log.</span></p>
+
+<p dir="ltr"><span style="color:#0000cd;">4. Some steps capture IDs from
+ service responses and update the relevant element in the configuration 
+file. If all steps succeed the configuration file is updated with newly 
+captured IDs as a last step.</span></p>
+
+<p dir="ltr"><span style="color:#0000cd;">5. The full Set Up process can be reversed by running the Tear Down flow in full.</span></p>
+
+<p dir="ltr"><span style="color:#0000cd;">6. If the Set Up process fails
+ prematurely the successful steps can be reversed by partially running 
+the Tear Down flow from the point of failure. Alternatively the error 
+can be corrected and the flow continued from the fail point.</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<h2 dir="ltr">Set Up Flow</h2>
+
+<p dir="ltr">Automated set up for creating a device type, device and logical interface using the configuration shown earlier:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#006400;"><img lconnwikiparamattachmentname="node-red-device-setup.png" lconnwikimacro="image" lconnresourcetype="attachment" src="End-to-end%20IoT%20Device%20Set%20Up%20-%20Automation%20using%20Node%20Red_files/node-red-device-setup.png" alt="" lconnwikiparamwikipage="End-to-end Device Set Up - Automation using Node Red" lconnattachedresourcetype="draft" width="918" height="1382"></span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<h2 dir="ltr">Tear Down Flow</h2>
+
+<p dir="ltr">This flow should reverse the Set Up flow. If an error 
+occurs the flow stops at the point of the error and can be re-started 
+from that point by pressing the appropriate start button.</p>
+
+<p dir="ltr"><img lconnwikiparamattachmentname="node-red-device-teardown.png" lconnwikimacro="image" lconnresourcetype="attachment" src="End-to-end%20IoT%20Device%20Set%20Up%20-%20Automation%20using%20Node%20Red_files/node-red-device-teardown.png" alt="" lconnwikiparamwikipage="End-to-end Device Set Up - Automation using Node Red" lconnattachedresourcetype="page" width="797" height="1202"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<h1 dir="ltr">Update Mappings between Event and Logical Interface</h1>
+
+<p dir="ltr">The small subflow below can be used to update the mappings. The mapping body might be implemented as follows:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#006400;">var eventId = global.get("eventId");</span></p>
+
+<p dir="ltr"><span style="color:#006400;">var mappings = {</span></p>
+
+<p dir="ltr"><span style="color:#006400;">&nbsp;&nbsp;&nbsp; "note": "$event.d.note?$event.d.note:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "addresses": "$event.d.addresses?$event.d.addresses:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "expires": "$event.d.expires?$event.d.expires:$now()",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "msgType": "$event.d.msgType?$event.d.msgType:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "code": "$event.d.code?$event.d.code:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "areaDes": "$event.d.areaDes?$event.d.areaDes:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "references": "$event.d.references?$event.d.references:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "description": "$event.d.description?$event.d.description:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "source": "$event.d.source?$event.d.source:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "startdate": "$event.d.startdate?$event.d.startdate:$now()",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "effective": "$event.d.effective?$event.d.effective:$now()",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "senderName": "$event.d.senderName?$event.d.senderName:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "urgency": "$event.d.urgency?$event.d.urgency:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "web": "$event.d.web?$event.d.web:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "contact": "$event.d.contact?$event.d.contact:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "scope": "$event.d.scope?$event.d.scope:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "incidents": "$event.d.incidents?$event.d.incidents:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "event": "$event.d.event?$event.d.event:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "headline": "$event.d.headline?$event.d.headline:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "area": "$event.d.area?$event.d.area:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "severity": "$event.d.severity?$event.d.severity:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "identifier": "$event.d.identifier?$event.d.identifier:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "resource": "$event.d.resource?$event.d.resource:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "certainty": "$event.d.certainty?$event.d.certainty:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "onset": "$event.d.onset?$event.d.onset:$now()",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "sent": "$event.d.sent?$event.d.sent:$now()",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "eventCode": "$event.d.eventCode?$event.d.eventCode:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "enddate": "$event.d.enddate?$event.d.enddate:$now()",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "sender": "$event.d.sender?$event.d.sender:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "instruction": "$event.d.instruction?$event.d.instruction:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "geocode": "$event.d.geocode?$event.d.geocode:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "restriction": "$event.d.restriction?$event.d.restriction:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "location": "$event.d.location?$event.d.location:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "lastupdate": "$event.d.lastupdate?$event.d.lastupdate:$now()",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "category": "$event.d.category?$event.d.category:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "parameters": "$event.d.parameters?$event.d.parameters:''",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "status": "$event.d.status?$event.d.status:''"</span></p>
+
+<p dir="ltr"><span style="color:#006400;">};</span></p>
+
+<p dir="ltr"><span style="color:#006400;">var eventMappings = {};<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+eventMappings[eventId] = mappings;</span></p>
+
+<p dir="ltr"><span style="color:#006400;">msg.payload = {<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "logicalInterfaceId": global.get("logicalInterfaceId"),<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "notificationStrategy": "on-every-event",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "propertyMappings": eventMappings,<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "version": "draft",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "updated": now()<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+};<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+msg.headers = {"Content-Type":"application/json"};</span></p>
+
+<p dir="ltr"><span style="color:#006400;">return msg;</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><img lconnwikiparamattachmentname="node-red-mapping-update.png" lconnwikimacro="image" lconnresourcetype="attachment" src="End-to-end%20IoT%20Device%20Set%20Up%20-%20Automation%20using%20Node%20Red_files/node-red-mapping-update.png" alt="" lconnwikiparamwikipage="End-to-end Device Set Up - Automation using Node Red" lconnattachedresourcetype="page" width="965" height="221"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<h1 dir="ltr">DB2 Warehouse</h1>
+
+<p dir="ltr">If the logical interface is defined correctly, and input 
+event data matches the defined interface, data will be transformed and 
+routed to a table (name=IOT_DEVICETYPENAME) in DB2 Warehouse that is 
+created and maintained by IoT.</p>
+
+<h3 dir="ltr">Sample Input Event Data:</h3>
+
+<div class="json" dir="ltr" tabindex="-1"><span sandbox="allow-forms allow-same-origin allow-scripts allow-popups">&nbsp;<span style="color:#800080;">&nbsp;&nbsp;</span></span><span style="color:#800080;"><span class="sBrace structure-2" id="s-2">{ </span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-3">"d"</span><span class="sColon" id="s-4">:</span><span class="sBrace structure-3" id="s-5">{ </span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-6">"event"</span><span class="sColon" id="s-7">:</span><span class="sObjectV" id="s-8">"Smoking&nbsp;violation"</span><span class="sComma" id="s-9">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-10">"msgType"</span><span class="sColon" id="s-11">:</span><span class="sObjectV" id="s-12">"Alert"</span><span class="sComma" id="s-13">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-14">"urgency"</span><span class="sColon" id="s-15">:</span><span class="sObjectV" id="s-16">"Future"</span><span class="sComma" id="s-17">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-18">"status"</span><span class="sColon" id="s-19">:</span><span class="sObjectV" id="s-20">"Complete"</span><span class="sComma" id="s-21">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-22">"sender"</span><span class="sColon" id="s-23">:</span><span class="sObjectV" id="s-24">"John"</span><span class="sComma" id="s-25">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-26">"headline"</span><span class="sColon" id="s-27">:</span><span class="sObjectV" id="s-28">"Violation"</span><span class="sComma" id="s-29">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-30">"certainty"</span><span class="sColon" id="s-31">:</span><span class="sObjectV" id="s-32">"Observed"</span><span class="sComma" id="s-33">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-34">"enddate"</span><span class="sColon" id="s-35">:</span><span class="sObjectV" id="s-36">"2018-11-02T19:06:00Z"</span><span class="sComma" id="s-37">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-38">"startdate"</span><span class="sColon" id="s-39">:</span><span class="sObjectV" id="s-40">"2018-11-02T19:05:00Z"</span><span class="sComma" id="s-41">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-42">"area"</span><span class="sColon" id="s-43">:</span><span class="sObjectV" id="s-44">"Gate&nbsp;C"</span><span class="sComma" id="s-45">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-46">"references"</span><span class="sColon" id="s-47">:</span><span class="sObjectV" id="s-48">""</span><span class="sComma" id="s-49">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-50">"category"</span><span class="sColon" id="s-51">:</span><span class="sObjectV" id="s-52">"Health"</span><span class="sComma" id="s-53">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-54">"location"</span><span class="sColon" id="s-55">:</span><span class="sObjectV" id="s-56">"POINT(-93.1965780&nbsp;44.9842060)"</span><span class="sComma" id="s-57">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-58">"severity"</span><span class="sColon" id="s-59">:</span><span class="sObjectV" id="s-60">"Moderate"</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sBrace structure-3" id="s-61">}</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;<span class="sBrace structure-2" id="s-62">}</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;<span class="sBrace structure-2" id="s-64">{ </span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-65">"d"</span><span class="sColon" id="s-66">:</span><span class="sBrace structure-3" id="s-67">{ </span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-68">"event"</span><span class="sColon" id="s-69">:</span><span class="sObjectV" id="s-70">"Smoke&nbsp;in&nbsp;waste&nbsp;bin"</span><span class="sComma" id="s-71">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-72">"msgType"</span><span class="sColon" id="s-73">:</span><span class="sObjectV" id="s-74">"Alert"</span><span class="sComma" id="s-75">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-76">"urgency"</span><span class="sColon" id="s-77">:</span><span class="sObjectV" id="s-78">"Immediate"</span><span class="sComma" id="s-79">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-80">"status"</span><span class="sColon" id="s-81">:</span><span class="sObjectV" id="s-82">"InProgress"</span><span class="sComma" id="s-83">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-84">"sender"</span><span class="sColon" id="s-85">:</span><span class="sObjectV" id="s-86">"Martin"</span><span class="sComma" id="s-87">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-88">"headline"</span><span class="sColon" id="s-89">:</span><span class="sObjectV" id="s-90">"Smoke"</span><span class="sComma" id="s-91">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-92">"certainty"</span><span class="sColon" id="s-93">:</span><span class="sObjectV" id="s-94">"Observed"</span><span class="sComma" id="s-95">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-96">"enddate"</span><span class="sColon" id="s-97">:</span><span class="sObjectV" id="s-98">"2018-11-08T19:06:00Z"</span><span class="sComma" id="s-99">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-100">"startdate"</span><span class="sColon" id="s-101">:</span><span class="sObjectV" id="s-102">"2018-11-03T20:05:00Z"</span><span class="sComma" id="s-103">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-104">"area"</span><span class="sColon" id="s-105">:</span><span class="sObjectV" id="s-106">"Area&nbsp;A"</span><span class="sComma" id="s-107">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-108">"references"</span><span class="sColon" id="s-109">:</span><span class="sObjectV" id="s-110">""</span><span class="sComma" id="s-111">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-112">"category"</span><span class="sColon" id="s-113">:</span><span class="sObjectV" id="s-114">"Fire"</span><span class="sComma" id="s-115">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-116">"location"</span><span class="sColon" id="s-117">:</span><span class="sObjectV" id="s-118">"POINT(-93.1966780&nbsp;44.9843060)"</span><span class="sComma" id="s-119">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-120">"severity"</span><span class="sColon" id="s-121">:</span><span class="sObjectV" id="s-122">"Severe"</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sBrace structure-3" id="s-123">}</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;<span class="sBrace structure-2" id="s-124">}</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;<span class="sBrace structure-2" id="s-126">{ </span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-127">"d"</span><span class="sColon" id="s-128">:</span><span class="sBrace structure-3" id="s-129">{ </span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-130">"event"</span><span class="sColon" id="s-131">:</span><span class="sObjectV" id="s-132">"Assault&nbsp;on&nbsp;woman&nbsp;by&nbsp;man"</span><span class="sComma" id="s-133">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-134">"msgType"</span><span class="sColon" id="s-135">:</span><span class="sObjectV" id="s-136">"Alert"</span><span class="sComma" id="s-137">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-138">"urgency"</span><span class="sColon" id="s-139">:</span><span class="sObjectV" id="s-140">"Immediate"</span><span class="sComma" id="s-141">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-142">"status"</span><span class="sColon" id="s-143">:</span><span class="sObjectV" id="s-144">"Complete"</span><span class="sComma" id="s-145">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-146">"sender"</span><span class="sColon" id="s-147">:</span><span class="sObjectV" id="s-148">"Brendan"</span><span class="sComma" id="s-149">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-150">"headline"</span><span class="sColon" id="s-151">:</span><span class="sObjectV" id="s-152">"Assault"</span><span class="sComma" id="s-153">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-154">"certainty"</span><span class="sColon" id="s-155">:</span><span class="sObjectV" id="s-156">"Observed"</span><span class="sComma" id="s-157">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-158">"enddate"</span><span class="sColon" id="s-159">:</span><span class="sObjectV" id="s-160">"2018-11-01T18:07:00Z"</span><span class="sComma" id="s-161">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-162">"startdate"</span><span class="sColon" id="s-163">:</span><span class="sObjectV" id="s-164">"2018-11-01T18:05:00Z"</span><span class="sComma" id="s-165">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-166">"area"</span><span class="sColon" id="s-167">:</span><span class="sObjectV" id="s-168">"Box&nbsp;3"</span><span class="sComma" id="s-169">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-170">"references"</span><span class="sColon" id="s-171">:</span><span class="sObjectV" id="s-172">""</span><span class="sComma" id="s-173">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-174">"category"</span><span class="sColon" id="s-175">:</span><span class="sObjectV" id="s-176">"Security"</span><span class="sComma" id="s-177">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-178">"location"</span><span class="sColon" id="s-179">:</span><span class="sObjectV" id="s-180">"POINT(-93.1965880&nbsp;44.9846060)"</span><span class="sComma" id="s-181">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-182">"severity"</span><span class="sColon" id="s-183">:</span><span class="sObjectV" id="s-184">"Severe"</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sBrace structure-3" id="s-185">}</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;<span class="sBrace structure-2" id="s-186">}</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;<span class="sBrace structure-2" id="s-188">{ </span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-189">"d"</span><span class="sColon" id="s-190">:</span><span class="sBrace structure-3" id="s-191">{ </span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-192">"event"</span><span class="sColon" id="s-193">:</span><span class="sObjectV" id="s-194">"Smoking&nbsp;violation"</span><span class="sComma" id="s-195">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-196">"msgType"</span><span class="sColon" id="s-197">:</span><span class="sObjectV" id="s-198">"Alert"</span><span class="sComma" id="s-199">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-200">"urgency"</span><span class="sColon" id="s-201">:</span><span class="sObjectV" id="s-202">"Future"</span><span class="sComma" id="s-203">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-204">"status"</span><span class="sColon" id="s-205">:</span><span class="sObjectV" id="s-206">"Complete"</span><span class="sComma" id="s-207">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-208">"sender"</span><span class="sColon" id="s-209">:</span><span class="sObjectV" id="s-210">"Brian"</span><span class="sComma" id="s-211">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-212">"headline"</span><span class="sColon" id="s-213">:</span><span class="sObjectV" id="s-214">"Violation"</span><span class="sComma" id="s-215">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-216">"certainty"</span><span class="sColon" id="s-217">:</span><span class="sObjectV" id="s-218">"Observed"</span><span class="sComma" id="s-219">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-220">"enddate"</span><span class="sColon" id="s-221">:</span><span class="sObjectV" id="s-222">"2018-12-15T19:06:00Z"</span><span class="sComma" id="s-223">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-224">"startdate"</span><span class="sColon" id="s-225">:</span><span class="sObjectV" id="s-226">"2018-11-02T19:05:00Z"</span><span class="sComma" id="s-227">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-228">"area"</span><span class="sColon" id="s-229">:</span><span class="sObjectV" id="s-230">"Gate&nbsp;E"</span><span class="sComma" id="s-231">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-232">"references"</span><span class="sColon" id="s-233">:</span><span class="sObjectV" id="s-234">""</span><span class="sComma" id="s-235">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-236">"category"</span><span class="sColon" id="s-237">:</span><span class="sObjectV" id="s-238">"Health"</span><span class="sComma" id="s-239">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-240">"location"</span><span class="sColon" id="s-241">:</span><span class="sObjectV" id="s-242">"POINT(-93.2965780&nbsp;44.9842060)"</span><span class="sComma" id="s-243">,</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-244">"severity"</span><span class="sColon" id="s-245">:</span><span class="sObjectV" id="s-246">"Severe"</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sBrace structure-3" id="s-247">}</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;<span class="sBrace structure-2" id="s-248">}</span></span></div>
+
+<p dir="ltr">&nbsp;</p>
+
+<h3 dir="ltr">Data in DB2</h3>
+
+<p dir="ltr"><img lconnwikiparamattachmentname="SchemaCreatedInDB2.PNG" lconnwikimacro="image" lconnresourcetype="attachment" src="End-to-end%20IoT%20Device%20Set%20Up%20-%20Automation%20using%20Node%20Red_files/SchemaCreatedInDB2.PNG" alt="" lconnwikiparamwikipage="End-to-end Device Set Up - Automation using Node Red" lconnattachedresourcetype="page" width="689" height="399"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><img lconnwikiparamattachmentname="DataInDB2.PNG" lconnwikimacro="image" lconnresourcetype="attachment" src="End-to-end%20IoT%20Device%20Set%20Up%20-%20Automation%20using%20Node%20Red_files/DataInDB2.PNG" alt="" lconnwikiparamwikipage="End-to-end Device Set Up - Automation using Node Red" lconnattachedresourcetype="page" width="962" height="186"></p>
+
+<p dir="ltr">&nbsp;</p></div></body></html>

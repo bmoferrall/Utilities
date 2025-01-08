@@ -1,0 +1,787 @@
+
+<!-- saved from url=(0089)file:///C:/Users/IBM_ADMIN/Downloads/IOC%20vs%20Mongo%20DB%20Data%20Rollup%20Example.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>IOC vs Mongo DB Data Rollup Example</title><style type="text/css">TABLE { border-collapse: collapse; border-top: 1px; border-left: 1px; border-style: solid; margin: 4px; }TD, TH { border-bottom: 1px; border-right: 1px; border-style: solid; padding: 4px; }TH { background-color: #D8D8D8; }</style></head><body><div><h1 dir="ltr">Introduction</h1>
+
+<p dir="ltr">This example shows a technique for aggregating time-series data over different time intervals using Mongo DB.</p>
+
+<p dir="ltr">The data used is time series traffic sensor data. The raw data collection has 1 minute granularity. We show how to roll it up into hourly and daily collections.</p>
+
+<p dir="ltr">Different aging policies could then be applied to each of the collections. For example, raw sensor data could be kept for 3 days, hourly sensor data kept for a week and daily data kept for a month, etc.</p>
+
+<p dir="ltr">We also compare the performance of doing a similar aggregation task using DB2.</p>
+
+<h1 dir="ltr">Mongo DB</h1>
+
+<h2 dir="ltr">Set Up</h2>
+
+<p dir="ltr">The script <a wiki="Useful Info" lconnwikiparamwikipage="Generic CSV Generator" lconnwikimacro="wikilink" id="wikiLink1527083011763" href="file:///C:/wikis/home/wiki/Useful%20Info/page/Generic%20CSV%20Generator" page="Generic CSV Generator">here</a> was used to generate time-series traffic sensor data: The attached <a href="https://w3-connections.ibm.com/wikis/form/api/wiki/1879f4b2-a135-4b6b-b50a-cff447409289/page/0e342634-14ec-4865-9eeb-c7764afdb3d2/attachment/4a8a36f8-4314-4b95-a9be-746793701109/media/traffic_data_100Sensors_144_persensorperday_60days.ini" lconnwikiparamwikiattachment="traffic_data_100Sensors_144_persensorperday_60days.ini" target="_blank">ini file</a> was used to generate data according to the following pattern:</p>
+
+<ul dir="ltr">
+	<li>100 Sensors</li>
+	<li>1 reading per sensor per minute</li>
+	<li>1440 readings per sensor per day</li>
+	<li>144,000 total readings per day</li>
+	<li>readings span 2 months, resulting in a total of 8.6 million records in the collection</li>
+</ul>
+
+<p dir="ltr">Sample CSV Data is shown below:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#800080;"><span style="font-family:Courier New, Courier, monospace">LINKID,TIMESTAMP,SPEED,TIME</span></span></p>
+
+<p dir="ltr"><span style="color:#800080;"><span style="font-family:Courier New, Courier, monospace">string,date,int,int<br><br>
+LINK1,2018-03-23 19:28:06,15,300<br><br>
+LINK2,2018-03-23 19:28:06,13,244<br><br>
+LINK3,2018-03-23 19:28:06,37,396</span></span></p>
+
+<p dir="ltr"><span style="color:#800080;">...</span></p>
+
+<p dir="ltr"><span style="font-family:Courier New, Courier, monospace"><span style="color: rgb(128, 0, 128);">LINK100,2018-03-23 19:29:06,15,473<br><br>
+LINK1,2018-03-23 19:30:06,9,444<br><br>
+LINK2,2018-03-23 19:30:06,17,314<br><br>
+LINK3,2018-03-23 19:30:06,4,219</span></span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">This is converted to json using the attached <a href="https://w3-connections.ibm.com/wikis/form/api/wiki/1879f4b2-a135-4b6b-b50a-cff447409289/page/0e342634-14ec-4865-9eeb-c7764afdb3d2/attachment/f71d797b-13c9-44a6-8bc9-faa6bd4eb8ab/media/csv_to_json.py" lconnwikiparamwikiattachment="csv_to_json.py" target="_blank">script</a>. A sample JSON record is as follows:</p>
+
+<p class="json" dir="ltr" tabindex="-1">&nbsp;</p>
+
+<div class="json" dir="ltr" tabindex="-1"><span style="font-family:Courier New, Courier, monospace"><span class="sBrace structure-1" id="s-1"><span style="color:#0000CD;">{ </span><span style="color:#0000CD;"> </span></span><br><br>
+<span style="color:#0000CD;">&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-2">"LINKID"</span><span class="sColon" id="s-3">:</span><span class="sObjectV" id="s-4">"LINK1"</span><span class="sComma" id="s-5">,</span><br><br>
+&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-6">"TIMESTAMP"</span><span class="sColon" id="s-7">:</span><span class="sObjectV" id="s-8">ISODate("2018-05-21T20:28:06Z"</span><span class="sComma" id="s-9">),</span><br><br>
+&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-10">"SPEED"</span><span class="sColon" id="s-11">:</span><span class="sObjectV" id="s-12">30</span><span class="sComma" id="s-13">,</span><br><br>
+&nbsp;&nbsp;&nbsp;<span class="sObjectK" id="s-14">"TIME"</span><span class="sColon" id="s-15">:</span><span class="sObjectV" id="s-16">436</span><br><br>
+<span class="sBrace structure-1" id="s-17">}</span></span></span></div>
+
+<p class="json" dir="ltr" tabindex="-1">&nbsp;</p>
+
+<p dir="ltr">We create a schema for the raw collection as follows:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#006400;"><span style="font-family:Courier New, Courier, monospace">db.createCollection("traffic_sensor_data", {<br><br>
+&nbsp;&nbsp; validator: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; $jsonSchema: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bsonType: "object",<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; required: [ "LINKID", "TIMESTAMP", "SPEED", "TIME" ],<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; properties: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; LINKID: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bsonType: "string",<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; description: "must be a string and is required"<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; },<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; TIMESTAMP: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bsonType: "date",<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; description: "must be a date and is required"<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; },<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SPEED: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bsonType: "int",<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; description: "must be an integer and is required"<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; },<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; TIME: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bsonType: "int",<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; description: "must be an integer and is required"<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br><br>
+&nbsp;&nbsp; }<br><br>
+})</span></span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">A combination index is created on LINKID + TIMESTAMP, which should be a unique key:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#006400;">db.traffic_sensor_data.createIndex( {LINKID: 1, TIMESTAMP: 1 } )</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">Mongo generates the required primary key '_id': To save space we could project LINKID+TIMESTAMP to '_id' and make it the primary key.</p>
+
+<p dir="ltr"><img alt="" height="408" id="1527081907592_0" src="./IOC vs Mongo DB Data Rollup Example_files/editor_image_f4a45fb4-83f2-4500-8895-6198c75039a8.png" width="313"></p>
+
+<h2 dir="ltr">Hourly Roll Up</h2>
+
+<p dir="ltr">We can use an aggregation pipeline such as the one shown below to roll the sensor data up into hourly averages.</p>
+
+<p dir="ltr">We create a derived time value 'time_hourly' which zeroes the minutes and seconds. That is then used with LINKID to group the records and calculate average speed and time values over the hour duration. More sophisticated calculations (e.g., speed variance) could also be calculated if required.. The output is placed in the collection 'traffic_sensor_data_daily' using the final $out aggregation stage:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="font-family:Courier New, Courier, monospace"><span style="color: rgb(0, 100, 0);">db.traffic_sensor_data.aggregate([<br><br>
+&nbsp;&nbsp;&nbsp; {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; $project: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _id: 0,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; LINKID: 1,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; time_hourly: { $dateFromParts: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; year: {$year:"$TIMESTAMP"},<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; month: {$month:"$TIMESTAMP"},<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; day: {$dayOfMonth:"$TIMESTAMP"},<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; hour: {$hour:"$TIMESTAMP"}<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; },<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SPEED: 1,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; TIME: 1<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br><br>
+&nbsp;&nbsp;&nbsp; },<br><br>
+&nbsp;&nbsp;&nbsp; {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; $group: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _id: { LINKID: "$LINKID", TIMESTAMP: "$time_hourly" },<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mean_speed: { $avg: "$SPEED" },<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mean_time: { $avg: "$TIME" },<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br><br>
+&nbsp;&nbsp;&nbsp; },<br><br>
+&nbsp;&nbsp;&nbsp; { $out: "traffic_sensor_data_hourly" }<br><br>
+]);</span></span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">An alternative approach to generating 'time_hourly' above would be:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#006400;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; time_hourly: { $dateFromString: {<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"dateString": { $dateToString: {<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;format: "%Y-%m-%d %H:00:00.000",<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;date: "$TIMESTAMP"<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;}<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;}<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;}<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;},</span></p>
+
+<p dir="ltr"><br><br>
+However, this proves to be around 10% slower.</p>
+
+<p dir="ltr">The hourly aggregation results in 144K hourly records:</p>
+
+<p dir="ltr"><img alt="" height="417" id="1527081878624_0" src="./IOC vs Mongo DB Data Rollup Example_files/editor_image_2ef573bd-d003-45f4-81cc-509d89fce83d.png" width="320"></p>
+
+<p dir="ltr">The time for this operation on Windows was 37 seconds, so 232K records processed per second. The time on Red Hat was 46 seconds.</p>
+
+<h4 dir="ltr">Scheduled Updates</h4>
+
+<p dir="ltr">A Java function to handle updates to the hourly table (e.g., scheduled to run once a day at midnight) might look something like this:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">public</span></span></span></strong> <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">static</span></span></span></strong> <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">void</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> trafficSensorDataHourly_Delta(MongoTestDriver testDriver) {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MongoCollection&lt;Document&gt; trafficSensorData = testDriver.</span></span></span><span style="color:#0000C0;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">database</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">.getCollection(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"traffic_sensor_data"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; AggregateIterable&lt;Document&gt; aggregateDocs;</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; List&lt;Document&gt; docsAsList = </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> ArrayList&lt;Document&gt;();</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SimpleDateFormat format = </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> SimpleDateFormat(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"yyyy-MM-dd HH:mm:ss"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">try</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Date lastCheckPoint = format.parse(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"2018-05-23 00:00:00"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;</p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; aggregateDocs = trafficSensorData.aggregate(Arrays.<em>asList</em>(</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>match</em>(<em>gte</em>(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"TIMESTAMP"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,lastCheckPoint)),</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>project</em>(<em>fields</em>(<em>excludeId</em>(),</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>include</em>(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"LINKID"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">),</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>computed</em>(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"time_hourly"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> Document(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$dateFromParts"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> Document(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"year"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">, </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> Document(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$year"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$TIMESTAMP"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">))</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; .append(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"month"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">, </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> Document(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$month"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$TIMESTAMP"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">))</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; .append(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"day"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">, </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> Document(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$dayOfMonth"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$TIMESTAMP"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">))</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; .append(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"hour"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">, </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> Document(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$hour"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$TIMESTAMP"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">))</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ),</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>include</em>(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"SPEED"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"TIME"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">)</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ),</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>group</em>(</span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> Document(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"LINKID"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$LINKID"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">).append(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"TIMESTAMP"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$time_hourly"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">), </span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>avg</em>(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"mean_speed"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">, </span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$SPEED"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">),</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>avg</em>(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"mean_time"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">, </span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$TIME"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">))</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; );</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">for</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> (Document doc : aggregateDocs) {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; docsAsList.add(doc);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">if</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> (docsAsList.size() &gt; 0)</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; testDriver.</span></span></span><span style="color:#0000C0;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">database</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">.getCollection(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"traffic_sensor_data_hourly"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">).insertMany(docsAsList);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;</p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; } </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">catch</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> (Exception e) {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; e.printStackTrace();</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</span></span></span></p>
+
+<p dir="ltr"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">}</span></span></span></p>
+
+<h2 dir="ltr">Daily Roll Up</h2>
+
+<p dir="ltr">We use a similar approach to roll up the hourly data into daily data. In this case we create a derived timestamp value 'time_daily' based on the hourly timestamp, but where we zero the hour component. The output is placed in the collection 'traffic_sensor_data_daily' using the final $out aggregation stage:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#006400;"><span style="font-family:Courier New, Courier, monospace">db.traffic_sensor_data_hourly.aggregate([<br><br>
+&nbsp;&nbsp;&nbsp; {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; $project: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; linkid: "$_id.LINKID",<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; time_daily: { $dateFromParts: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; year: {$year:"$_id.TIMESTAMP"},<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; month: {$month:"$_id.TIMESTAMP"},<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; day: {$dayOfMonth:"$_id.TIMESTAMP"}<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; },<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; speed: "$mean_speed",<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; time: "$mean_time"<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br><br>
+&nbsp;&nbsp;&nbsp; },<br><br>
+&nbsp;&nbsp;&nbsp; {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; $group: {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _id: { linkid: "$linkid", timestamp: "$time_daily" },<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mean_speed: { $avg: "$speed" },<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mean_time: { $avg: "$time" },<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br><br>
+&nbsp;&nbsp;&nbsp; },<br><br>
+&nbsp;&nbsp;&nbsp; { $out: "traffic_sensor_data_daily" }<br><br>
+]);</span></span></p>
+
+<p dir="ltr">This results in 6.1K records and took 775 ms to process on Windows and 800 ms on Red Hat:</p>
+
+<p dir="ltr"><img alt="" height="427" id="1527083231148_0" src="./IOC vs Mongo DB Data Rollup Example_files/editor_image_a810bd80-bfbd-4f10-8782-77bd5d4b5da2.png" width="313"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<h4 dir="ltr">Scheduled Updates</h4>
+
+<p dir="ltr">A Java function to handle updates to the daily table (e.g., scheduled to run once a week) might look something like this:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">public</span></span></span></strong> <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">static</span></span></span></strong> <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">void</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> trafficSensorDataDaily_Delta(MongoTestDriver testDriver) {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MongoCollection&lt;Document&gt; trafficSensorHourlyData = testDriver.</span></span></span><span style="color:#0000C0;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">database</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">.getCollection(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"traffic_sensor_data_hourly"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; AggregateIterable&lt;Document&gt; aggregateDocs;</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; List&lt;Document&gt; docsAsList = </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> ArrayList&lt;Document&gt;();</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SimpleDateFormat format = </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> SimpleDateFormat(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"yyyy-MM-dd HH:mm:ss"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">try</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Date lastCheckPoint = format.parse(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"2018-05-23 00:00:00"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;</p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; aggregateDocs = trafficSensorHourlyData.aggregate(Arrays.<em>asList</em>(</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>match</em>(<em>gte</em>(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"_id.TIMESTAMP"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,lastCheckPoint)),</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>project</em>(<em>fields</em>(<em>excludeId</em>(),</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>computed</em>(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"linkid"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$_id.LINKID"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">),</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>computed</em>(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"timestamp"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> Document(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$dateFromParts"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> Document(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"year"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">, </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> Document(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$year"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$_id.TIMESTAMP"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">))</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; .append(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"month"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">, </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> Document(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$month"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$_id.TIMESTAMP"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">))</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; .append(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"day"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">, </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> Document(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$dayOfMonth"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$_id.TIMESTAMP"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">))</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ),</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>include</em>(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"mean_speed"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"mean_time"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">)</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ),</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>group</em>(</span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> Document(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"linkid"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$linkid"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">).append(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"timestamp"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$timestamp"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">), </span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>avg</em>(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"mean_speed"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">, </span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$mean_speed"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">),</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>avg</em>(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"mean_time"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">, </span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$mean_time"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">))</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; );</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">for</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> (Document doc : aggregateDocs) {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; docsAsList.add(doc);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">if</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> (docsAsList.size() &gt; 0)</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; testDriver.</span></span></span><span style="color:#0000C0;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">database</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">.getCollection(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"traffic_sensor_data_daily"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">).insertMany(docsAsList);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; } </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">catch</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> (Exception e) {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; e.printStackTrace();</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">}</span></span></span></p>
+
+<h2 dir="ltr">Map Reduce</h2>
+
+<p dir="ltr">Mongo DB also offers a native implementation of MapReduce. It doesn't perform as well as the aggregation pipeline under normal circumstances. MapReduce does offer the potential for parallelization in sharded clusters. In this case it can offer better performance at scale. For the sake of completeness we show two possible MapReduce implementations of the above hourly and daily aggregation pipelines:</p>
+
+<h3 dir="ltr">Hourly Example</h3>
+
+<p dir="ltr"><span style="color:#006400;">db.traffic_sensor_data.mapReduce(<br><br>
+&nbsp;&nbsp;&nbsp; function() {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; emit( { LINKID: this.LINKID,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; TIMESTAMP: new Date( this.TIMESTAMP.getTime() - this.TIMESTAMP.getMinutes() * 60 * 1000<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - this.TIMESTAMP.getSeconds() * 1000 )<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; },<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; { speed: this.SPEED, time: this.TIME }<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; );<br><br>
+&nbsp;&nbsp;&nbsp; },<br><br>
+&nbsp;&nbsp;&nbsp; function(key, values) {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; var len = values.length;<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; var speedsum = 0, timesum = 0;<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; values.forEach( function(v) {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; speedsum += v.speed;<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; timesum += v.time;<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; });<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return { speed: speedsum/len, time: timesum/len }&nbsp;&nbsp; &nbsp;<br><br>
+&nbsp;&nbsp;&nbsp; },<br><br>
+&nbsp;&nbsp;&nbsp; {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; out : "traffic_sensor_data_hourly"<br><br>
+&nbsp;&nbsp;&nbsp; }<br><br>
+)</span></p>
+
+<p dir="ltr"><img alt="" height="243" id="1527274046968_0" src="data:image/png;base64,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" width="263"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">As predicted, performance is worse with MapReduce. See the table at the end of the page for details.</p>
+
+<h4 dir="ltr">Scheduled Updates</h4>
+
+<p dir="ltr">A Java function to handle updates to the hourly table (e.g., scheduled to run once a day at midnight) might look something like this:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">public</span></span></span></strong> <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">static</span></span></span></strong> <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">void</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> trafficSensorDataHourly_delta_mapReduce(MongoTestDriver testDriver) {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MongoCollection&lt;Document&gt; trafficSensorData = testDriver.</span></span></span><span style="color:#0000C0;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">database</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">.getCollection(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"traffic_sensor_data"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; List&lt;Document&gt; docsAsList = </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> ArrayList&lt;Document&gt;();</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SimpleDateFormat format = </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> SimpleDateFormat(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"yyyy-MM-dd HH:mm:ss"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; String mapFunction = </span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"function() {\r\n"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> + </span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; emit( { LINKID: this.LINKID,\r\n"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> + </span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; TIMESTAMP: new Date( this.TIMESTAMP.getTime()\r\n" +</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - this.TIMESTAMP.getMinutes() * 60 * 1000\r\n"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> + </span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - this.TIMESTAMP.getSeconds() * 1000 )\r\n"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> + </span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; },\r\n"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> + </span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; { speed: this.SPEED, time: this.TIME }\r\n"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> + </span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; );\r\n"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> + </span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"&nbsp;&nbsp;&nbsp; }"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">;</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; String reduceFunction = </span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"</span></span></span><span style="color:#0000FF;"><span style="font-size: 10px;"><span style="font-family: courier new,courier,monospace;">function(key, values) {\r\n" +<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; var len = values.length;\r\n" +<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; var speedsum = 0, timesum = 0;\r\n" +<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; \r\n" +<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; for (var i=0; i&lt;len; i++) {\r\n" +<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; speedsum += values[i].speed;\r\n" +<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; timesum += values[i].time;\r\n" +<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; });\r\n" +<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return { speed: speedsum/len, time: timesum/len }\r\n" +<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"&nbsp;&nbsp;&nbsp; }</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">;</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">try</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Date lastCheckPoint = format.parse(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"2018-05-23 00:00:00"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MapReduceIterable&lt;Document&gt; docs = trafficSensorData.mapReduce(mapFunction,reduceFunction)</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; .filter(<em>gte</em>(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"TIMESTAMP"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,lastCheckPoint));</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">for</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> (Document doc : docs) {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; docsAsList.add(doc);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">if</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> (docsAsList.size() &gt; 0) {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; testDriver.</span></span></span><span style="color:#0000C0;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">database</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">.getCollection(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"traffic_sensor_data_hourly"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">).insertMany(docsAsList);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; } </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">catch</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> (Exception e) {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; e.printStackTrace();</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">}</span></span></span></p>
+
+<h3 dir="ltr">Daily Example</h3>
+
+<p dir="ltr"><span style="color:#006400;">db.traffic_sensor_data_hourly.mapReduce(<br><br>
+&nbsp;&nbsp;&nbsp; function() {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; emit( { linkid: this._id.LINKID,<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; timestamp: new Date( this._id.TIMESTAMP.getTime() - this._id.TIMESTAMP.getHours() * 60 * 60 * 1000 )<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; },<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; { speed: this.value.speed, time: this.value.time }<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; );<br><br>
+&nbsp;&nbsp;&nbsp; },<br><br>
+&nbsp;&nbsp;&nbsp; function(key, values) {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; var len = values.length;<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; var speedsum = 0, timesum = 0;<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; values.forEach( function(v) {<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; speedsum += v.speed;<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; timesum += v.time;<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; });<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return { speed: speedsum/len, time: timesum/len }&nbsp;&nbsp; &nbsp;<br><br>
+&nbsp;&nbsp;&nbsp; },<br><br>
+&nbsp;&nbsp; &nbsp;{<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;out: "traffic_sensor_data_daily"<br><br>
+&nbsp;&nbsp; &nbsp;}<br><br>
+)</span></p>
+
+<p dir="ltr"><img alt="" height="246" id="1527274166110_0" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAVIAAAFGCAIAAAC38IA1AAAgAElEQVR4nO2dz2tbV9rH5y/pItsus5jua2qyK2lMCCEpWEkmZFOTLLIYedNpSEsXbuRCCRPHgWCHgWCZNoEk0ykj+y2kSMpMDJJMXmTIi98aYlCIQa89TuG+i2fyzOPnOefoypJtXZ/vBy3iq3PPPUe5n/Pr6jz6XQIAiIzfHXQBAAD7DbQHIDqgPQDRAe0BiA5oD0B0QHsAogPaAxAd0B6A6ID2AEQHtAcgOqA9ANEB7QGIDmgPQHRAewCiA9oDEB3QHoDogPYARAe0ByA6oD0A0QHtAYgOaA9AdAyc9vPF4rHh4Uq5bN9qtVrnc7nxfH5zc3PXmU8WCr53Kf9AAgAOBwOq/XyxaN/qSntKfGx4+NjwMJu8p9o3m83LY2OtVmt3pwOwbwyc9gHSa08pachA/6Z2JKx9j0B7kBUGSPtKuUyds+rtZb99bHhYat9sNk+OjNihgdK7Ui7TWXR8slCgrGS7wPmrE+ngyZGRZrPpK6rKwaYHYKAYIO0JMopNlj287e192k8WCvJgs9k8l8s1m005g6iUy+dzOdU5U6OgzlKJK+Wy02r09iAr9FP77e3t21NT1WpVHqxWq7enpra3t1NmorSnP2W33HGQv7m5OZ7Py0XBVqt1eWyMtGer5USAkdrPF4tcDM6T/uFceoD2ICv0ubdfWlr6w4ULbH61Wj03OqoagjBKe7mwn35ub3t7ElJqb1uHZKf2PBfgV6VcdjYW6irpKwvAgdD/QT6bvwvnkz5pH57b00EeAsgTlfa2V3c2FgS0B1lhT+b2S0tLn545c/rUqW6dT4z2NHsnFan7TTO3p+OysaB/S+3ni0XbgkjtfXP4+WLRLgoknlkDAAPIXi3pLS8v12q1rk6hjl0NquVxcjKN9vyWzEddwjlqkNonO1fspeoyH3l138o/AAPFwK3kHyzOgT0Ahwxo/x/k1ACAQ8x+a2+/2WK/JLPP+L4mBMBhBb09ANEB7QGIDmgPQHRAewCiA9oDEB3QHoDoyJj29JV4+7U5IhCQSyK/8GuZLBR837ELnyhpb70dm/752v3q+sbm6W9+vFt60fGUPeJu6cXpb35c39i8dr86Nv1ze+vtQZUEDA4Z054g+X3ad3z23lF7X9vRu/YL9TXr3kJ97aPPH/CLLG2svv74q0fX7lfViY3V16e/+bGx+jpJEsqc0yRJcu1+9eOvHtG7BLQHlkOlfUrS29vLidfuV++WXpD/C/U1OujUnt8iP+lP0nts+mc64tT+2v0qO09NwM0ndX5XXfFu6YVsIEDMHBLtnd+0o28ETt26Rd8L5KG7tJcGCLwtV+0CIuSuHvWFwslCoavWpyvtz39XmvjhOY0UrPYqq4kfnjdWX8tGAQAfh0R7whmQS4bHIGNZe0qvtuKpBQLZRtjefq+1X159fe1+tb31VmlPf3JiBtqDNBx+7clSGaKD7D2Xy50cGem4LjhfLDqHCbujW+1pTr5QX5Paf/zVo48+f8ATBwm0B2mIV3vf3hulvVzYPxDtG6uvJ354rnr7uacr9K7KBNqDNMSrPUfOVov2g6Z9e+vtH2d+ufmkrub2d0svbFbQHqQhau3poHpKr7TnPPkrA/s5t+dl/PPf/T28ks9nQXvQkYxpb7frk3XOgFwdtU/eWU3mq1C53Bzw8Xuzs+P5fI/ay0f0ZLLvuT1rTw/nfM/t+fmczEQ9vQdAkjHtAQC9A+0BiA5oD0B0QHsAogPaAxAd0B6A6ID2AEQHtAcgOqA9ANFxqLRPGVQLgMjJnvaB0Dopg2p1i/xib39zDvOmXn909Oj3R458f+TIq1KJj2+tr/80NETHV6an5SnP8/lHR4++qdedmTwdHf2t3Q5c8bd2++noKCV+ns/vIgcqg038qlSigzLnACvT05T4p6GhrfX1jhVPWRdZEvVBOfFd0Vm8vtSlq+LtmkOl/R5xINr/1m5XP/uM/uNflUp8E9DdTDcKCUktAt1GL7799m8ffsi3y9b6+uKJE/ZEH8/zeTKEcrOJOYGPV6USJaDL2cRpivGqVGJDnufz1Hz4Kt5VXd7U6/z5rExPh6X1XdFZvL7Upavi9ULGtLdbbuSOGrWFfrJQoAbi5MjIvdlZGWxXbulRW2tUPmp/jspfBeHyXXG+WKTwXvaKcr+QD7px7T2XiJu79uWXb+p1ed8kSfKmXl88cUImDvimzl2ZnrY39Mr0dJq+OpBDx2KodoFL5as4X0t2j766yLPkp8p/qnGBvaKveH2pS6B4/SVj2ifB3l5tvKWt8rVabTyfH8/na7Ua/Y613Y1Hp8hAOhJnb18pl0l1WR7fFWXEPiokL0B0q70Uj0aPUi11F9JtRwnkkMHJq1KJs6KhpuptKLf0N6JTezkA8VWWE/BI+FWpFK640t5Zl/bLl1x+ngKwk1Z75xXbL186i9d7Xf61vh4oXn855NqP5/OtVms8n58vFvnn66V4lJsMoWkN7DjI51Acviv2GJlLjiTpjqFb+enoaKtSkf25s/OhG6vjiJFUaVUqj44e/Wlo6E2jwbcsTzjTzO25JGoczlPc8HiBVGlVKnTf06xhZXo6XPE0dWlVq+QVrT5wnr6SOK/4ZnnZWbze68KtUsri9UKM2tuZAiktf3vDhutQ2qud/+m1T9O9S9QcT3V0sltLPL093Tp0oupM5Hqh6uHVBIGQo1O51KfaFN/SAFch0HyoLpSHGOGKK5x1Ia9kFxqebjiv2H750lm83utCvX364vVCjNqrYbaFUqqFAKm9KsMuevuUjxvU2DUxE07VISjtbeKAKvbcXQzRE9do2V4o0FGr+TBfMVzxlHWRk+eOcxbnFX3F60tduipeL2RP+8T/e1Upte84aFdW24ZGTg0o2/Taq8IHOn/rfLJTKrvqY2939QggoIpcCPCtt4cbjiSF80mKxwGy4nzFcMXVZ+WrC40CnIujtuS+KzqLR6dQ/r61xo51CRSvv2RSe7sO7wyq5ZMwMb94YRftVbNig+3ys4PzudyTx487au/L2ae9fK6r5tXyLb71eeasnvrK4x0ninLwz87LR+4d5/aqGFzCrooh08srOivO6VUT6ayLrI5zYqLK5ruis3iJS/tu6+IrXn/JpPaZw/eMAIADAdrvB9AeDBTQfj+A9mCggPYARAe0ByA6oD0A0QHtAYgOaA9AdEB7AKJj0LWX22P2M7RGkiSVcrnjF3j3P+QOAL0z6NoTex1RRzYubPKeak+nI+wfOBCg/b8zp2/a0785Ys/edebQHhwgB6C92oImt83JLStya6rVXm5fVYErOBPndhq741Xp3Ww2L4+NtVotOk6xsbg8ak++PJE356jr2oBfgUBdAOwDB6C93R5LPjebzSePH/NBKU967WXMbM7ZniKZLxZtcDvelk9vNZvNc7mc+nbtfLHI2ssElXKZr1spl51fy0VvDw6Qfmq/vb19e2qqWq3Kg9Vq9fbU1Pb2Nh+Rs2LftlMV8T6l9mq+3TGcBjFZKNiRBWnPWcmJgCwkJ5gvFvldzsF5lkoTLhsAe0Gfe/ulpaU/XLjA5ler1XOjo6ohSMTWFNkZqvHzLrRXga5UJj5sb395bIzKJsfwqnVIdmpvx+0cz8NZAGgPDpD+D/LZfJ/zybuBNPkmzeEmoC+9fUrCc3vZ2ytLlfa2Vw+4De3BAbInc/ulpaVPz5w5feqU03lislA4l8vJyTZPxbnT7qg9q67C7Dh18s3tuQ1Kdg7mpfZyus5I7X1zeIqQ73wAMVkodBU/F4B+sVdLesvLy7VaLZCAJt7WZFoJpzBVPE6Wg2c+hVfs783O8lO3ZOd4O82SXrIzShcnkCvwvt/ecq7kq/S+xxPOiwKwD2Tjuf1gohYFAMgK0H6XyKkBANkC2neHDKGLrh5kFGgPQHRAewCiA9oDEB3QHoDogPYARAe0ByA6oL0b34/qAnAIgPZu0mv/bLXx/tefvPfFsfe+OPawsUgH1zbWPyicpYPvfXHs+J0rG1uhH4qdWJjhxBMLMypblYnMnBIzl+auv//1J89WG87iUQ4bW+3jd67InPkU+dalueuqkJfmrss6ckls7ag6MqUvZ8pTFUMdl/lQdWQOtoKBzxkQ0N5NSu03ttpn743Tzfqwscg37trG+vE7V9Y2Uv1Q8cPGIt+vz1Ybvy+ckd4Sl+au071O/simgawgA//01z/L09c21oduXpRKq2aCrv5B4SwVla9CucnEDxuLQzcvDt28yBLSiVcf3JCy0VWuPrjxQeGs1HViYYZyUzlfmrsuk3FiFlsWb2Jh5vidK2fvjdsmSX1KIEz2tJc7WORG3fO53NStW+r7c87YmCoT+WU730/cB7bxMHRDs4TptZd3uRRV5swHpQaJuNGvPrjxbLWhWo1nq42hmxdlYqs9H1TnkmNyfPGXfz4+fucKV/DS3PWNrbZMRmc9bCzKj8Ii5XRqL8vJVXi22rj64EYSdFt+kiBAxrT37ainXW50nIPqyO26MowP/ZsSS59lD696+z3VnjptutEvzV13jpn5blb/ViNbpS71vZRADkbkpbldkIOOh43F9744pkYBlJuyVGlvPwpLR+3p6g8bi3RFZbJPe2fxgJNMam931Mtfkuat+MpV3s8vg21xO/Lrr7/K8F67WNKTxsrpt5XNwlNfe0Or/p+0JzGO37mysFKV/blzjkCtgxwjyDJzv0raL6xU3//6kw8KZ//xv8t0XW4a+qK9an3kHF6ORPgDdA5P1KdEnwbm9unJmPbJzs0wcpDP/+aOXW6Al9vg5QZ4Hv/X63UZfrdb7ScWZpxeJeZGt/AUnbxS+dhRtLy/ZRedeHp7ksQus6nEqocn2/97/X9Y9d61l4sRCjnn50/MuWQYGOSrGRDwkT3tGbKXg+qo3n6+WAxEyLbjBRV1uyvtJxZmAmI7p+sSeR+rhTfrj7qz1WzWmqwSS4WUP/bc43eu/NfKP9QDBdWpptdezmV8n8PEwkzHTyCgfcePGhAZ1l7FybbTct+Pasi5PR+UialdSDm3DzufmOk63f1KP7mSL/tDKxVpINfbwx24ejjHwtjpgFwIcC7799Lbd3Sei6rKacdK4SU9jPPTkDHtVYwtGa/auQKv0nNnLmcKHNOKD57P5SiqV0ft1fN57gl5tmmn61Z79SCdbfENieVFZQPhfBQvj6sxhZVHlsQqKrW3D/9txWUJ5RyeiycrIkclzpUR+1FT+eUV4XxKMqa9D9nbAwDCQHsAogPaAxAdh0R7AEB6oD0A0QHtAYgOaA9AdEB7AKID2gMQHYdK+8DP3QIAmOxp7/umffJO+z36XTpfWChnUC2Cvxib8kujKmpVIOfk3ZdS5Xfs5Z4ZZwmdO17t9j5nNCtbF19iGyBMXTFNHX1BtUBfOFTa7ynOsFByz4na3OIMmBFARa3yhesiaKuZDC/1bLVx9t64vZxz26/csiJ3tnAdFb7gH84QXc4AYc44Wb5PzxdUC/SLjGlvt8rT7hq5tV7G1aAG4uTIyL3ZWfmz876gWomIxhEoBqtit7JygCqnhD5s1Cr7rt18KvVwXlG2Hb7cZIAdp8m+ujgT+wKEOeNk+T49Z2LfRwd2Qca0T4K9PckvtT85MlKr1Sh+Tq1WOzkyUimXfUG1+KyutJfDaf5zYmHm7L3xwG42Z4a+sFBKVO4AO2pPzlx9cEOOz9WmdPmnz2RnXXxthDNAmDNOlu/TCwfVAr1zyLUfz+dbrdZ4Ps9RNyrlsjOoVvoCyGGzHJrKWM4ycHUgpAwRjlqV7PRHplHa8ySZR8XkD0koFVLR7MK7dH11cSZO/AHCbJws36fnTAz6SIzaO4Nqpby6dViudf3pr3+2w1T7p8RuYrfrgr5wOr5AsXyKCrnFf8q961O/FG20T9VGhOsiE/sChPniZDk/vXBQLdA7MWrvDKqVhjRhoWw/nAS1tz+DoVbL5YKcDW7xnitEpwwyLSfGqhXgxL6pu3Mo7qwLp3EGCOsYJ0t+eikTg17InvaJP9BdSu2dQbVk5s42JY3zzpBVNna9iq7DqN6+Y7guZ28v+16pkDNOlu/XOOSgJlAXm9gZIKxjnCz56aVJDHokk9rbdXg7bq+Uyz7tE09QLcKnfcewUMooDvbk/HWqjtr7wnXJ9DZmvi2Js4ScWE4f5FBCldnWxZfYFyCsY5wsX5nh/F6QSe0BAL0A7QGIDmgPQHRAewCiA9oDEB3QHoDogPYARAe0ByA6oD0A0QHtAYgOaA9AdEB7AKID2gMQHdAegOiA9gBEB7QHIDqgPQDRAe0BiA5oD0B0QHsAogPaAxAd0B6A6ID2AEQHtAcgOqA9ANEB7QGIDmgPQHRAewCiA9oDEB3QHoDo+F37/zbxwguvqF7QHi+8ontBe7zwiu4F7fHCK7oXtMcLr+he0B4vvKJ7QXu88Iruhef2AEQHtAcgOqA9ANEB7QGIDmgPQHRAewCiA9oDEB3QHoDogPYARAe0ByA6oD0A0QHtAYgOaA9AdEB7AKID2gMQHdAegOiA9gBEB7QHIDqgPQDRAe0BiA5oD0B0QHsAogPaAxAd0B6A6ID2AEQHtAcgOqA9ANEB7QGIDmgPQHQMnPbzxeKx4eFKuWzfarVa53O58Xx+c3Nz15lPFgq+dyn/QAIADgcDqv18sWjf6kp7SnxsePjY8DCbvKfaN5vNy2NjrVZrd6cDsG8MnPYB0mtPKWnIQP+mdiSsfY9Ae5AVBkj7SrlMnbPq7WW/fWx4WGrfbDZPjozYoYHSu1Iu01l0fLJQoKxku8D5qxPp4MmRkWaz6SuqysGmB2Cg6Kf229vbt6emqtWqPFitVm9PTW1vb6fMhIxik2UPb3t7n/aThYI82Gw2z+VyzWZTziAq5fL5XE51ztQoqLNU4kq57LQavT3ICn3u7ZeWlv5w4QKbX61Wz42OqoYgjNKe/pTdcsdB/ubm5ng+LxcFW63W5bEx0p6tlhMBRmo/XyxyMThP+odz6QHag6zQ/0E+m78L5xOjvVzYTz+3t709CSm1t61DslN7ngvwq1IuOxsLdZWu6gvA/rMnc/ulpaVPz5w5fepUt84nfdI+PLengzwEkCcq7W2v7mwsCGgPssJeLektLy/XarVdnKi0p9k7qUjdb5q5PR2XjQX9W2o/XyzaFkRq75vDzxeLdlEg8cwaABhABmglnzp2NaiWx8nJNNrzWzIfdQnnqEFqn+xcsZeqy3zk1X0r/wAMFAOk/SDgHNgDcMiA9v9BTg0AOMTst/b2my32SzL7jO9rQgAcVtDbAxAd0B6A6ID2AEQHtAcgOqA9ANEB7QGIjoxpT1+Jt1+bIwIBuSTyC7+WyULB9x278ImS9tbbsemfr92vrm9snv7mx7ulFx1P2SPull6c/ubH9Y3Na/erY9M/t7feHlRJwOCQMe0Jkt+nfcdn7x2197UdvWu/UF+z7i3U1z76/AG/yNLG6uuPv3p07X5VndhYfX36mx8bq6+TJKHMOU2SJNfuVz/+6hG9S0B7YDlU2qckvb29nHjtfvVu6QX5v1Bfo4NO7fkt8pP+JL3Hpn+mI07tr92vsvPUBNx8Uud31RXvll7IBgLEzCHR3vlNO/pG4NStW/S9QB66S3tpgMDbctUuIELu6lFfKJwsFLpqfbrS/vx3pYkfntNIwWqvspr44Xlj9bVsFADwcUi0J5wBuWR4DDKWtaf0aiueWiCQbYTt7fda++XV19fuV9tbb5X29CcnZqA9SMPh154slSE6yN5zudzJkZGO64LzxaJzmLA7utWe5uQL9TWp/cdfPfro8wc8cZBAe5CGeLX37b1R2suF/QPRvrH6euKH56q3n3u6Qu+qTKA9SEO82nPkbLVoP2jat7fe/nHml5tP6mpuf7f0wmYF7UEaotaeDqqn9Ep7zpO/MrCfc3texj//3d/DK/l8FrQHHcmY9na7PlnnDMjVUfvkndVkvgqVy80BH783Ozuez/eovXxETyb7ntuz9vRwzvfcnp/PyUzU03sAJBnTHgDQO9AegOiA9gBEB7QHIDqgPQDRAe0BiA5oD0B0QHsAogPaAxAdh0r7lEG1AIic7GkfCK2TMqhWt8gv9vY35zBv6vVHR49+f+TI90eOvCqV+PjW+vpPQ0N0fGV6Wp7yPJ9/dPTom3rdmcnT0dHf2u3AFX9rt5+OjlLi5/n8LnKgMvgSU/6qhE5Wpqcpk5+GhrbW1ztWPGVdkiR5VSrRwTTF8F3RWby+1KWr4u2aQ6X9HnEg2v/Wblc/+4z+41+VSnwT0N1MNwoJSS0C3UYvvv32bx9+yLfL1vr64okT9kQfz/N5MoRys4k5gY9XpRIloMupxCvT009HR7lIgUzYkOf5PDUfvop3VZc39Tp/PivT02FpfVd0Fq8vdemqeL2QMe3tlhu5o0ZtoZ8sFKiBODkycm92VgbblVt61NYalY/an6PyV0G4fFecLxYpvJe9otwv5INuXHvPJeLmrn355Zt6Xd43SZK8qdcXT5yQiQPaq3NJUXVDr0xPh7VXiWUOlP+rUimsvWqeuFS+ivO1ZPfoq4s8S36q/KcaF9gr+orXl7oEitdfMqZ9Euzt1cZb2ipfq9XG8/nxfL5Wq9HvWNvdeHSKDKQjcfb2lXKZVJfl8V1RRuyjQvICRLfaS/Fo9GjV4ruQbjtKIIcMTl6VSpwVDTVVb0O5pb8RpfYsgByA+CrLCXgk/KpUCldcae+sS/vlSy4/TwHYSau984rtly+dxeu9Lv9aXw8Ur78ccu3H8/lWqzWez88Xi/zz9VI8yk2G0LQGdhzkcygO3xV7jMwlR5J0x9Ct/HR0tFWpyP7c2fnQjdVxxEiqtCqVR0eP/jQ09KbR4FuWJ5xp5vZcEjkOZw9Tat+qVOi+p1nDyvR0uOJp6tKqVskrWn3gPH0lcV7xzfKys3i914VbpZTF64UYtbczBVJa/vaGDdehtFc7/9Nrn6Z7l6g5nuroZLeWeHp7unXoRNWZyPVC1cOrCQIhR6dyqU+1KWppQHV6HbWXXSgPMcIVVzjrQl7JLjQ863Fesf3ypbN4vdeFevv0xeuFGLVXw2wLpVQLAVJ7VYZd9PYpHzeosWtiJpyqQ1Da28QBVey5NnFHaRPPJJmbGH75+jE1H+Yrhiuesi5y8txxzuK8oq94falLV8Xrhexpn/h/ryql9h0H7cpq29DIqQFlm157VfhA52+dT3ZKZVd97O2uHgEEVJELAb5l/3DDkbictwk6Nhyy4nzFcMXVZ+WrCzVAzsVRW3LfFZ3Fo1Mof99aY8e6BIrXXzKpvV2HdwbV8kmYmF+8sIv2qlmxwXb52cH5XO7J48cdtffl7NNePtdV82r5Ft/6/HBYPfWVxztOFOXgn52XfXXHub0qhl3uSqO9zEde0VlxTq+aSGddZHWcExP1Efmu6Cxe4tK+27r4itdfMql95vA9IwDgQID2+wG0BwMFtN8PoD0YKKA9ANEB7QGIDmgPQHRAewCiA9oDEB3QHoDoGHTt5faY/QytkSRJpVzu+AXe/Q+5A0DvDLr2xF5H1JGNC5u8p9rT6Qj7Bw4EaP/vzOmb9vRvjtizd505tAcHyAFor7agyW1zcsuK3JpqtZfbV1XgCs7EuZ3G7nhVejebzctjY61Wi45TbCwuj9qTL0/kzTnqujbgVyBQFwD7QD+1397evj01Va1W5cFqtXp7amp7e5uP2O2x5HOz2Xzy+DEflPKk117GzOac7SmS+WLRBrfjbfn0VrPZPJfLqW/XzheLrL1MUCmX+bqVctn5tVz09uAA6XNvv7S09IcLF9j8arV6bnRUNQRyVuzbdqoi3qfUXs23O4bTICYLBTuyIO05KzkRkIXkBPPFIr/LOTjPUmnCZQNgL+j/IJ/NdzpP8NYU2Rmq8fMutFeBrlQmPmxvf3lsjMomx/CqdUh2am/H7RzPw1kAaA8OkD2Z2y8tLX165szpU6eczifvBtLkmzSHm4C+9PYpCc/tZW+vLFXa21494Da0BwfIXi3pLS8v12q1QILJQuFcLicn2zwV5067o/asugqz49TJN7fnNijZOZiX2svpOiO1983hKUK+8wHEZKHQVfxcAPrFgT3Ao4m3NZlWwilMFY+T5eCZT+EV+3uzs/zULdk53k6zpJfsjNLFCeQKvO+3t5wr+Sq97/GE86IA7APZeG4/mKhFAQCyArTfJXJqAEC2gPbdIUPooqsHGQXaAxAd0B6A6ID2AEQHtAcgOqA9ANEB7QGIDmjvxvejugAcAqC9m/TaP1ttvP/1J+99cey9L449bCyqdy/NXXcet2nki9Kvbax/UDhLRz4onF3b+Pfvnz5sLNLB97/+5NlqI0mSja328TtXZA78Fpfw0tx130W5ePKKEwsztoLH71zZ2GrbxLJ4nLNMnCTJxMKMSswV4deluevhuvBZXB3fpwcCQHs3KbXf2GqfvTdON+XDxqK9QYduXhy6eTH9jfhstfH7wplnqw26+/nES3PX6UZf21g/fucKaTOxMCN9k9fl4xMLM8fvXDl7b1xqP7Eww39yYroi2U5KO1sxOtFXvIeNRZnAXoUSqxaB03Nb46wLFWzo5kVVHfvphT9kkD3t5Q4WuVH3fC43deuW+v6cMzamykR+2c73E/eBbTyMUoX+/Ms/H0s9OsJC0v3Nd7AUlfHd5ZfmrpM/z1YbVx/cSISWKgGlGbp5cW1jXQnmvGJXxaMWZ2OrrZR2FpuL4asL/0lHnNr7jgNFxrT37ainXW50nIPqyO26MowP/ZsSS59lD696+11oTzeo6hXDKJcuzV0nD2mYbTNJ74/SnsbJDxuLsk9+2FiUnbD6M3H18OHisfayXjw1UOmV3s66cMPk1Ft9eiBAJrW3O+rlL0nzVnzlKu/nl8G2uB359ddfZXivXSzpybEr369daW/vZvJTzR0INYqWxbD+KO0ToR8nls0W/Zurw5Nw1RAEiifbAhJyYaVKk3aaCL5Ou0oAAATPSURBVMhCpunq5ScZHomAjmRM+2TnZhg5yOd/c8cuN8DLbfByAzyP/+v1ugy/2632cpotb9D02tvpNLcjZJeS2TlDDgz7VW9Prvr0/qBwduqXorXIOUW3xaNsVYPCPbz9TGyrZOsirbaG+xYjgJPsac+QvRxUR/X288ViIEK2HS+oqNtdaT+xMGNXztXyslXUZiLTqJteTbx5gK0ycfqjjquZtk+YiYUZO2rggXSgeJShLIa9ohyNp2mq7PK+GmWoTw+EybD2Kk62nZb7flRDzu35oExM7ULKub1yXmF7NmoU1D1q3VMTZtm3+5wPrGNbheQauy2/zyI+7iuedd5+SirzNF29zU2egq6+WzKmvYqxJeNVO1fgVXruzOVMgWNa8cHzuRxF9eqovXx27ezVU2rvHLHLx9py1UANJZwPzHzF43V4Pu58+G/X/2ztnMf54bx9is5vqUxso+NbtmCU9s5PDwTImPY+ZG8PAAgD7QGIDmgPQHQcEu0BAOmB9gBEB7QHIDqgPQDRAe0BiA5oD0B0HCrtAz93CwBgsqe975v2yTvt9+h36eR3Ue0XwlUgql1EeqLvrqpkaocc4Yxy5SueLIn8GqwNfWW/9iuvq4oXSGxjfjH0rVs+7gyqZUvO4QACiUFXHCrt9we5n0z+u6tgGDbDqw9uqP0ktK3t6oMbKoIdb19zBqJSBy/NXQ8EwEhSbNrzFc+ZWFbWxvyi6zqDYdhPNWC1LwIXSEnGtLdb5Wl3jdxaL+NqUANxcmTk3uys/Nl5X1CtRETjCBSDwz/Y/bC7CP8wsTDzsLFoY3JRcB67IVdGpPAF1Qhory7kDHEhGxdn8XyJ5SdgL/T7whmKL+gMy8HF4IB8PnxhOUBKMqZ9EuztSX6p/cmRkVqtRvFzarXayZGRSrnsC6rFZ4W1V0rI2A92B176SE+Bfe8yT+roOL6FHUjbyFxWe5nAWcKu4lhwYhtfhCc+3D/7PhDVVNHgwjc/cjZ2ID2HXPvxfL7Vao3n8xx1o1IuO4Nqpbk0bx1VYV5o2nn8zpWFlarqhdJHekqpvSyJHUKH5/bSKxlwWrUdTjN9xbOTDuqr6XJcfY7M58xc9t6UiQyqrYqHrr53YtTeGVSrqzKwiqqHV2Enuwr/0FVvTy45VwHtKTJ/GQ+b2oKpX4ocgbvj6eFrqR4+edctqxCaVnsbBYQvlDICF+iKGLV3BtXqipRBpruK9JRSe3tFZ0S9NMGnOfHZe+MdmyrncWf8PyuwXYSXQxK75OmLnOlMDHZB9rRP/IHuUmrvDKolM0+zpCfD1Mh/qzj5zoV9G10nkN5qr+LhOIPnOqNf2oUAa5GvqXIWzybmUNyJaaE4H9Xb29LKE9MsmoJuyaT2dh3ejtsr5bJP+8QTVIvwaS/DRfme2zvj3qp8rPa2M+QI9s4H486SOA/6fq/K/i6VLJty21k8X+JkZ/hdO+JQ2jsbI18JfYlBt2RSewBAL0B7AKID2gMQHdAegOiA9gBEB7QHIDqgPQDRAe0BiA5oD0B0QHsAogPaAxAd0B6A6ID2AEQHtAcgOqA9ANEB7QGIDmgPQHRAewCiA9oDEB3QHoDogPYARAe0ByA6oD0A0QHtAYgOaA9AdEB7AKID2gMQHdAegOj4f6RXI1sAs3RWAAAAAElFTkSuQmCC" width="256"></p>
+
+<h4 dir="ltr">Scheduled Updates</h4>
+
+<p dir="ltr">A Java function to handle updates to the daily table using MapReduce (e.g., scheduled to run once a week) might look something like this:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">public</span></span></span></strong> <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">static</span></span></span></strong> <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">void</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> trafficSensorDataDaily_delta_mapReduce(MongoTestDriver testDriver) {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MongoCollection&lt;Document&gt; trafficSensorDataHourly = testDriver.</span></span></span><span style="color:#0000C0;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">database</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">.getCollection(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"traffic_sensor_data_hourly"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; List&lt;Document&gt; docsAsList = </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> ArrayList&lt;Document&gt;();</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SimpleDateFormat format = </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> SimpleDateFormat(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"yyyy-MM-dd HH:mm:ss"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; String mapFunction = </span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"function() {\r\n"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> + </span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; emit( { linkid: this._id.LINKID,\r\n"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> + </span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; timestamp: new Date( this._id.TIMESTAMP.getTime() - this._id.TIMESTAMP.getHours() * 60 * 60 * 1000 )\r\n"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> + </span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; },\r\n"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> + </span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; { speed: this.value.speed, time: this.value.time }\r\n"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> + </span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; );\r\n"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> + </span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"&nbsp;&nbsp;&nbsp; }"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">;</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; String reduceFunction = </span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"</span></span></span><span style="color:#0000FF;"><span style="font-size: 10px;"><span style="font-family: courier new,courier,monospace;">function(key, values) {\r\n" +<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; var len = values.length;\r\n" +<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; var speedsum = 0, timesum = 0;\r\n" +<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; \r\n" +<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; for (var i=0; i&lt;len; i++) {\r\n" +<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; speedsum += values[i].speed;\r\n" +<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; timesum += values[i].time;\r\n" +<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; });\r\n" +<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return { speed: speedsum/len, time: timesum/len }\r\n" +<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;"&nbsp;&nbsp;&nbsp; }</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">;</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">try</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Date lastCheckPoint = format.parse(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"2018-05-23 00:00:00"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MapReduceIterable&lt;Document&gt; docs = trafficSensorDataHourly.mapReduce(mapFunction,reduceFunction)</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; .filter(<em>gte</em>(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"_id.TIMESTAMP"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,lastCheckPoint));</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">for</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> (Document doc : docs) {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; docsAsList.add(doc);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">if</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> (docsAsList.size() &gt; 0) {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; testDriver.</span></span></span><span style="color:#0000C0;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">database</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">.getCollection(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"traffic_sensor_data_daily"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">).insertMany(docsAsList);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; } </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">catch</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> (Exception e) {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; e.printStackTrace();</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">}</span></span></span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<h1 dir="ltr">DB2</h1>
+
+<h2 dir="ltr">Set Up</h2>
+
+<p dir="ltr">We load the source CSV data from the Mongo DB example directly into a DB2 table using the LOAD command:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#0000CD;">create table wih.traffic_sensor_data (</span><br><br>
+<span style="color:#0000CD;">&nbsp;&nbsp; LINKID varchar(25),</span><br><br>
+<span style="color:#0000CD;">&nbsp;&nbsp; TIMESTAMP timestamp,</span><br><br>
+<span style="color:#0000CD;">&nbsp;&nbsp; SPEED INTEGER,</span><br><br>
+<span style="color:#0000CD;">&nbsp;&nbsp; TIME INTEGER</span><br><br>
+<span style="color:#0000CD;">);</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#0000CD;">db2 'load from traffic_sensor_data.csv of del modified by timestampformat="YYYY-M-D HH:MM:SS" messages /tmp/sensor.log insert into wih.traffic_sensor_data'</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#0000CD;">CREATE INDEX WIH.LINK_TIMESTAMP_IDX<br><br>
+&nbsp;&nbsp;&nbsp; ON WIH.TRAFFIC_SENSOR_DATA<br><br>
+&nbsp;&nbsp;&nbsp; (LINKID ASC, TIMESTAMP ASC)<br><br>
+&nbsp;&nbsp;&nbsp; CLUSTER<br><br>
+&nbsp;&nbsp;&nbsp; MINPCTUSED 0<br><br>
+&nbsp;&nbsp;&nbsp; ALLOW REVERSE SCANS<br><br>
+&nbsp;&nbsp;&nbsp; PAGE SPLIT SYMMETRIC<br><br>
+&nbsp;&nbsp;&nbsp; COLLECT SAMPLED DETAILED STATISTICS<br><br>
+&nbsp;&nbsp;&nbsp; COMPRESS NO;</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<h2 dir="ltr">Hourly Roll Up</h2>
+
+<p dir="ltr">First we create the hourly table:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#0000CD;">CREATE TABLE WIH.TRAFFIC_SENSOR_DATA_HOURLY (<br><br>
+&nbsp;&nbsp; &nbsp;LINKID VARCHAR(25),<br><br>
+&nbsp;&nbsp; &nbsp;TIMESTAMP_HOURLY TIMESTAMP,<br><br>
+&nbsp;&nbsp; &nbsp;MEAN_SPEED INTEGER,<br><br>
+&nbsp;&nbsp; &nbsp;MEAN_TIME INTEGER<br><br>
+);</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">To measure time for the operation we use a shell script as follows:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#800080;">db2 connect to WIHDB &gt; /dev/null<br><br>
+db2 truncate table wih.traffic_sensor_data_hourly &gt; /dev/null</span></p>
+
+<p dir="ltr"><span style="color:#800080;">date1=$(date +"%s%N")</span></p>
+
+<p dir="ltr"><span style="color:#800080;">db2 -ntf insert_hourly.sql</span></p>
+
+<p dir="ltr"><span style="color:#800080;">db2 connect reset &gt; /dev/null</span></p>
+
+<p dir="ltr"><span style="color:#800080;">date2=$(date +"%s%N")<br><br>
+diff=$(($date2-$date1))<br><br>
+echo "$(($diff/1000000000)) seconds, $(($diff % 1000000000/1000000)) milliseconds&nbsp; elapsed."</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">and where 'insert_hourly.sql' is as follows:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#0000CD;">INSERT INTO WIH.TRAFFIC_SENSOR_DATA_HOURLY<br><br>
+&nbsp;&nbsp; SELECT LINKID, TIMESTAMP_ISO(TIMESTAMP - MINUTE(TIMESTAMP) MINUTES - SECOND(TIMESTAMP) SECONDS) as TIMESTAMP_HOURLY,<br><br>
+&nbsp;&nbsp;&nbsp; AVG(SPEED) AS MEAN_SPEED, AVG(TIME) AS MEAN_TIME<br><br>
+&nbsp;&nbsp;&nbsp; FROM WIH.TRAFFIC_SENSOR_DATA<br><br>
+&nbsp;&nbsp;&nbsp; GROUP BY LINKID, TIMESTAMP_ISO(TIMESTAMP - MINUTE(TIMESTAMP) MINUTES - SECOND(TIMESTAMP) SECONDS);</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">We're lucky in this case that the number of inserts (144K) isn't enough to saturate the transaction logs. Otherwise we would have to do the select/insert operations in batches (e.g., using a stored procedure). Perhaps surprisingly the DB2 aggregation is faster than it was for Mongo at 22 seconds. That may be because we have a cluster index on the LINKID+TIMESTAMP. The result is as follows:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><img alt="" height="204" id="1527088444644_0" src="./IOC vs Mongo DB Data Rollup Example_files/editor_image_cbad53bb-bef6-4091-806a-6f351a85db42.png" width="440"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<h2 dir="ltr">Daily Roll Up</h2>
+
+<p dir="ltr">Before doing the daily calculation we create a cluster index on the hourly table:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#0000CD;">CREATE INDEX WIH.LINK_TIMESTAMP_HOURLY_IDX<br><br>
+&nbsp;&nbsp;&nbsp; ON WIH.TRAFFIC_SENSOR_DATA_HOURLY<br><br>
+&nbsp;&nbsp;&nbsp; (LINKID ASC, TIMESTAMP_HOURLY ASC)<br><br>
+&nbsp;&nbsp; &nbsp;CLUSTER<br><br>
+&nbsp;&nbsp;&nbsp; MINPCTUSED 0<br><br>
+&nbsp;&nbsp;&nbsp; ALLOW REVERSE SCANS<br><br>
+&nbsp;&nbsp;&nbsp; PAGE SPLIT SYMMETRIC<br><br>
+&nbsp;&nbsp;&nbsp; COLLECT SAMPLED DETAILED STATISTICS<br><br>
+&nbsp;&nbsp;&nbsp; COMPRESS NO;</span></p>
+
+<p dir="ltr"><br><br>
+Next we create the daily table:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#0000CD;">CREATE TABLE WIH.TRAFFIC_SENSOR_DATA_DAILY (<br><br>
+&nbsp;&nbsp; &nbsp;LINKID VARCHAR(25),<br><br>
+&nbsp;&nbsp; &nbsp;TIMESTAMP_DAILY TIMESTAMP,<br><br>
+&nbsp;&nbsp; &nbsp;MEAN_SPEED INTEGER,<br><br>
+&nbsp;&nbsp; &nbsp;MEAN_TIME INTEGER<br><br>
+);</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">Again, we use a shell script to invoke the operation and measure the duration:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#800080;">db2 connect to WIHDB &gt; /dev/null<br><br>
+db2 truncate table wih.traffic_sensor_data_daily &gt; /dev/null</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#800080;">date1=$(date +"%s%N")</span></p>
+
+<p dir="ltr"><span style="color:#800080;">db2 -ntf insert_daily.sql</span></p>
+
+<p dir="ltr"><span style="color:#800080;">db2 connect reset &gt; /dev/null</span></p>
+
+<p dir="ltr"><span style="color:#800080;">date2=$(date +"%s%N")<br><br>
+diff=$(($date2-$date1))<br><br>
+echo "$(($diff/1000000000)) seconds, $(($diff % 1000000000/1000000)) milliseconds&nbsp; elapsed."</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">and where 'insert_daily.sql' is as follows:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#0000CD;">INSERT INTO WIH.TRAFFIC_SENSOR_DATA_DAILY<br><br>
+&nbsp;&nbsp; SELECT LINKID, TIMESTAMP_ISO(TIMESTAMP_HOURLY - HOUR(TIMESTAMP_HOURLY) HOURS) as TIMESTAMP_DAILY,<br><br>
+&nbsp;&nbsp;&nbsp; AVG(MEAN_SPEED) AS MEAN_SPEED, AVG(MEAN_TIME) AS MEAN_TIME<br><br>
+&nbsp;&nbsp;&nbsp; FROM WIH.TRAFFIC_SENSOR_DATA_HOURLY<br><br>
+&nbsp;&nbsp;&nbsp; GROUP BY LINKID, TIMESTAMP_ISO(TIMESTAMP_HOURLY - HOUR(TIMESTAMP_HOURLY) HOURS);</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">The time for the operation was 411 ms, again quicker than Mongo DB. The output looks as follows:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><img alt="" height="191" id="1527088934906_0" src="./IOC vs Mongo DB Data Rollup Example_files/editor_image_335ab44b-ba08-44c5-8f9b-296f57db315a.png" width="431"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<h1 dir="ltr">Performance Comparison between DB2 and Mongo DB</h1>
+
+<table border="1" dir="ltr" height="97" style="width: 863px;" width="814">
+	<tbody>
+		<tr>
+			<td colspan="1" rowspan="2" style="width: 166px; background-color: rgb(47, 79, 79);"><br><br>
+			&nbsp;</td>
+			<td colspan="1" rowspan="2" style="width: 166px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Total Raw Records</span><br><br>
+			&nbsp;</td>
+			<td colspan="2" rowspan="1" style="width: 166px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Hourly Aggregation</span></td>
+			<td colspan="2" rowspan="1" style="width: 291px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Daily Aggregation</span></td>
+		</tr>
+		<tr>
+			<td style="width: 166px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Aggregate Record Count</span></td>
+			<td style="width: 166px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Aggregation Time (ms)</span></td>
+			<td style="width: 168px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Aggregate Record Count</span></td>
+			<td style="width: 149px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Aggregation Time (ms)</span></td>
+		</tr>
+		<tr>
+			<td style="width: 166px;">DB2</td>
+			<td style="width: 166px;">8.64 million</td>
+			<td style="width: 166px;">144,100</td>
+			<td style="width: 166px;">&nbsp; 22,000</td>
+			<td style="width: 168px;">1441</td>
+			<td style="width: 149px;">&nbsp; 411</td>
+		</tr>
+		<tr>
+			<td style="width: 166px; background-color: rgb(211, 211, 211);">
+			<p>Mongo DB</p>
+
+			<p>&nbsp;&nbsp; Aggregation Pipeline</p>
+
+			<p>&nbsp;&nbsp; MapReduce</p>
+			</td>
+			<td style="width: 166px; background-color: rgb(211, 211, 211);">
+			<p>&nbsp;</p>
+
+			<p>8.64 million</p>
+
+			<p>&nbsp;</p>
+			</td>
+			<td style="width: 166px; background-color: rgb(211, 211, 211);">144,100</td>
+			<td style="width: 166px; background-color: rgb(211, 211, 211);">
+			<p>&nbsp;</p>
+
+			<p>&nbsp; 37,000</p>
+
+			<p>144,000</p>
+			</td>
+			<td style="width: 168px; background-color: rgb(211, 211, 211);">1441</td>
+			<td style="width: 149px; background-color: rgb(211, 211, 211);">
+			<p>&nbsp;</p>
+
+			<p>&nbsp; 775</p>
+
+			<p>2500</p>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">So, for this particular use case DB2 performs better. However, bear in mind that Mongo DB's aggregation pipeline feature allows for many more complex operations than DB2 offers, plus its syntax is a lot easier to formulate and understand.</p></div></body></html>

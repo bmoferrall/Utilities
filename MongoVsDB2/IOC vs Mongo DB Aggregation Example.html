@@ -1,0 +1,660 @@
+<html><head><title>IOC vs Mongo DB Aggregation Example</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style type="text/css">TABLE { border-collapse: collapse; border-top: 1px; border-left: 1px; border-style: solid; margin: 4px; }TD, TH { border-bottom: 1px; border-right: 1px; border-style: solid; padding: 4px; }TH { background-color: #D8D8D8; }</style></head><body><div><h1 dir="ltr">Analytics Comparison</h1>
+
+<p dir="ltr">The following will compare performance between IOC (or DB2) and Mongo DB for a sample analytics task.</p>
+
+<p dir="ltr">Liam (Cantwell) was implementing a POC where he wanted to 
+calculate the number of alerts that are spatially and temporally related
+ to a given alert. This was implemented using a standard DB2 stored 
+procedure. We will look at how we might do the same thing using Mongo's 
+aggregation pipeline (probably Mongo's strongest feature) and compare 
+the performance of each.</p>
+
+<h2 dir="ltr">IOC Version</h2>
+
+<p dir="ltr">This example SQL-PL procedure has been adapted to the weather events data source described <a wiki="Useful Info" lconnwikiparamwikipage="Set Up And Basic Tests" lconnwikimacro="wikilink" id="wikiLink1527003300572" href="file:///wikis/home/wiki/Useful%20Info/page/Set%20Up%20And%20Basic%20Tests" page="Set Up And Basic Tests">here</a>.</p>
+
+<p dir="ltr">We pass in the ID of the event for which we want to find 
+related events. We also pass in the number of minutes and distance 
+within which events must fall to be considered related.</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="font-family:courier new,courier,monospace;"><span style="color: rgb(128, 0, 128);">CREATE OR REPLACE FUNCTION IOC.EVENT_SMART_FEATURES (v_event_id INTEGER, v_number_minutes INTEGER, v_distance_in_meters INTEGER)<br><br>
+&nbsp;&nbsp; &nbsp;RETURNS TABLE (<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;ID INTEGER,<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;NUM_RELATED_EVENTS INTEGER)<br><br>
+&nbsp;&nbsp; &nbsp;NO EXTERNAL ACTION<br><br>
+&nbsp;&nbsp; &nbsp;LANGUAGE SQL<br><br>
+F1: BEGIN ATOMIC</span></span></p>
+
+<p dir="ltr"><span style="font-family:courier new,courier,monospace;"><span style="color: rgb(128, 0, 128);">&nbsp;&nbsp; &nbsp;DECLARE v_number_minutes_each_side INTEGER;<br><br>
+&nbsp;&nbsp; &nbsp;SET v_number_minutes_each_side = v_number_minutes / 2;</span></span></p>
+
+<p dir="ltr"><span style="font-family:courier new,courier,monospace;"><span style="color: rgb(128, 0, 128);">&nbsp;&nbsp; &nbsp;RETURN<br><br>
+&nbsp;&nbsp; &nbsp;SELECT E.INDEXNUM, COALESCE(HIT.NUM_EVENTS, 0) NUM_RELATED_EVENTS<br><br>
+&nbsp;&nbsp; &nbsp;FROM IOC.TARGET_TABLE_WEATHER_EVENTS E<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;LEFT JOIN<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;TABLE (<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;SELECT E1.INDEXNUM, COUNT(E2.INDEXNUM) as NUM_EVENTS</span></span></p>
+
+<p dir="ltr"><span style="font-family:courier new,courier,monospace;"><span style="color: rgb(128, 0, 128);">&nbsp;&nbsp;
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;FROM 
+IOC.TARGET_TABLE_WEATHER_EVENTS E1, IOC.TARGET_TABLE_WEATHER_EVENTS E2</span></span></p>
+
+<p dir="ltr"><span style="font-family:courier new,courier,monospace;"><span style="color: rgb(128, 0, 128);">&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;WHERE</span></span></p>
+
+<p dir="ltr"><span style="font-family:courier new,courier,monospace;"><span style="color: rgb(128, 0, 128);">&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;E1.INDEXNUM = v_event_id AND<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;E2.INDEXNUM != v_event_id AND</span></span></p>
+
+<p dir="ltr"><span style="font-family:courier new,courier,monospace;"><span style="color: rgb(128, 0, 128);">&nbsp;&nbsp;
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;E1.STARTDATETIME &lt; E2.STARTDATETIME + 
+v_number_minutes_each_side MINUTES AND<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;E1.STARTDATETIME &gt; E2.STARTDATETIME - 
+v_number_minutes_each_side MINUTES AND</span></span></p>
+
+<p dir="ltr"><span style="font-family:courier new,courier,monospace;"><span style="color: rgb(128, 0, 128);">&nbsp;&nbsp;
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;db2gse.ST_Intersects(E2.LOCATION, db2gse.ST_Buffer(E1.LOCATION, 
+v_distance_in_meters, 'METER')) = 1 </span></span></p>
+
+<p dir="ltr"><span style="font-family:courier new,courier,monospace;"><span style="color: rgb(128, 0, 128);">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ SELECTIVITY 0.00001</span></span></p>
+
+<p dir="ltr"><span style="font-family:courier new,courier,monospace;"><span style="color: rgb(128, 0, 128);">&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;GROUP BY E1.INDEXNUM<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;)<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;HIT<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;ON E.INDEXNUM = HIT.INDEXNUM<br><br>
+&nbsp;&nbsp; &nbsp;WHERE E.INDEXNUM = v_event_id;<br><br>
+END F1@</span></span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">In order to iterate through the data source we create the 
+following procedure. Since 1.6 million records would take to long to 
+process we pass in the max number of events to process for the given t<span style="color:#800080;">est:</span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="font-family:courier new,courier,monospace;"><span style="color: rgb(128, 0, 128);">CREATE OR REPLACE PROCEDURE IOC.ALL_EVENT_SMART_FEATURES(V_MAX_EVENTS_TO_PROCESS INTEGER)<br><br>
+&nbsp;&nbsp; &nbsp;LANGUAGE SQL<br><br>
+F1: BEGIN</span></span></p>
+
+<p dir="ltr"><span style="font-family:courier new,courier,monospace;"><span style="color: rgb(128, 0, 128);">&nbsp;&nbsp; &nbsp;DECLARE STMT_TEXT VARCHAR(500);<br><br>
+&nbsp;&nbsp; &nbsp;DECLARE EVENT_ID INTEGER;<br><br>
+&nbsp;&nbsp; &nbsp;DECLARE BATCH_SIZE INTEGER DEFAULT 10000;<br><br>
+&nbsp;&nbsp; &nbsp;DECLARE ITER INTEGER DEFAULT 1;<br><br>
+&nbsp;&nbsp; &nbsp;DECLARE AT_END INT DEFAULT 0;<br><br>
+&nbsp;&nbsp; &nbsp;DECLARE SQLCODE INTEGER DEFAULT 0;<br><br>
+&nbsp;&nbsp; &nbsp;DECLARE retcode INTEGER DEFAULT 0;<br><br>
+&nbsp;&nbsp; &nbsp;DECLARE NOT_FOUND CONDITION FOR SQLSTATE '02000';<br><br>
+&nbsp;&nbsp; &nbsp;DECLARE STMT STATEMENT;<br><br>
+&nbsp;&nbsp; &nbsp;DECLARE C1 CURSOR WITH HOLD FOR STMT;<br><br>
+&nbsp;&nbsp; &nbsp;DECLARE CONTINUE HANDLER FOR NOT_FOUND SET AT_END = 1;<br><br>
+&nbsp;&nbsp; &nbsp;DECLARE CONTINUE HANDLER FOR SQLEXCEPTION, SQLWARNING SET retcode = SQLCODE;</span></span></p>
+
+<p dir="ltr"><span style="font-family:courier new,courier,monospace;"><span style="color: rgb(128, 0, 128);">&nbsp;&nbsp; &nbsp;SET STMT_TEXT = 'SELECT INDEXNUM FROM IOC.TARGET_TABLE_WEATHER_EVENTS<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;FETCH 
+FIRST ' || V_MAX_EVENTS_TO_PROCESS || ' ROWS ONLY';<br><br>
+&nbsp;&nbsp; &nbsp;PREPARE STMT FROM STMT_TEXT;</span></span></p>
+
+<p dir="ltr"><span style="font-family:courier new,courier,monospace;"><span style="color: rgb(128, 0, 128);">&nbsp;&nbsp; &nbsp;OPEN C1;<br><br>
+&nbsp;&nbsp; &nbsp;FETCH C1 INTO EVENT_ID;<br><br>
+&nbsp;&nbsp; &nbsp;WHILE (ITER &lt;= V_MAX_EVENTS_TO_PROCESS) DO<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;INSERT INTO 
+IOC.WEATHER_EVENTS_RELATED SELECT * FROM 
+TABLE(IOC.EVENT_SMART_FEATURES(EVENT_ID, 1000, 5000));<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;IF (MOD(ITER,BATCH_SIZE) = 0) THEN<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;COMMIT;<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;END IF;<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;FETCH C1 INTO EVENT_ID;<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;SET ITER = ITER + 1;<br><br>
+&nbsp;&nbsp; &nbsp;END WHILE;<br><br>
+&nbsp;&nbsp; &nbsp;CLOSE C1;<br><br>
+&nbsp;&nbsp; &nbsp;COMMIT;</span></span></p>
+
+<p dir="ltr"><span style="font-family:courier new,courier,monospace;"><span style="color: rgb(128, 0, 128);">END F1@</span></span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">The full SQL-PL is attached <a href="https://w3-connections.ibm.com/wikis/form/api/wiki/1879f4b2-a135-4b6b-b50a-cff447409289/page/395b10aa-ed23-4134-b9c9-62ff92d39789/attachment/fffcca82-0bea-48ac-abb9-3ba3ec5ad9f8/media/related_weather_events.sql" lconnwikiparamwikiattachment="related_weather_events.sql" target="_blank">here</a>.</p>
+
+<p dir="ltr">The output from the stored procedure goes into a table as follows:</p>
+
+<p dir="ltr"><img alt="" id="1526999293202_0" src="IOC%20vs%20Mongo%20DB%20Aggregation%20Example_files/editor_image_1d488421-2e9a-4532-8648-07eba41d8e9e.png" height="269" width="211"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<h2 dir="ltr">Mongo DB Version</h2>
+
+<p dir="ltr">The nearest equivalent to SQL-PL in Mongo is Javascript, 
+which can be executed in the Mongo Shell. Since we can only execute the 
+aggregation pipeline in this case a single event at a time (due to 
+restrictions with the $geoNear stage) we will want to do the bulk event 
+processing as close to the Mongo core as possible. So, we implement both
+ procedures using js.</p>
+
+<p dir="ltr">The method for calculating related events is shown below.</p>
+
+<p dir="ltr">One enhancement over the SQL-PL version is that we also store an array of event IDs with each output record:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><img alt="" id="1527003011918_0" src="IOC%20vs%20Mongo%20DB%20Aggregation%20Example_files/editor_image_070e6245-13c6-42eb-80b0-394fb4139b55.png" height="490" width="342"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#006400;"><span style="font-family: courier new,courier,monospace;">function get_nearby_events(event_id, event_loc, event_startdate, max_distance, max_minutes, max_nearby_events = 100) {<br><br>
+&nbsp;&nbsp; &nbsp;var minutes_either_side = max_minutes / 2;<br><br>
+&nbsp;&nbsp; &nbsp;<br><br>
+&nbsp;&nbsp; &nbsp;var output = db.weather_events.aggregate([<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;{<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;$geoNear: {<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;near: event_loc,<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;spherical: true,<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;query: { startdatetime: { $lt : new Date(event_startdate.getTime()
+ + minutes_either_side * 1000 * 60),<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; 
+$gt : new Date(event_startdate.getTime() - minutes_either_side * 1000 * 
+60) } },<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;maxDistance: max_distance,<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;num: max_nearby_events,<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;distanceField: "dist.calculated"<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;}<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;},<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;{<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;$match: { indexnum: { $ne: event_id} }<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;},<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;{<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;$project: {<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;_id: 0,<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;event_id: "$indexnum",<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;centerpointid: event_id.toString()<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;}<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;},<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;{<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;$group: {<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;_id: "$centerpointid",<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;nearby_events: { $push: "$event_id" },<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;nearby_events_count: { $sum: 1}<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;}<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;}<br><br>
+&nbsp;&nbsp; &nbsp;]);<br><br>
+&nbsp;&nbsp; &nbsp;return output._batch.length &gt; 0 ? output._batch[0] : no_nearby_events(event_id);<br><br>
+}</span></span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">A restriction with the $geoNear pipeline stage is that it 
+must come first. Thus we can only process a single event at a time in 
+this case.</p>
+
+<p dir="ltr">Two methods were tested for doing bulk event processing. The second batches the inserts into the output table:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#006400;"><span style="font-family: courier new,courier,monospace;">function build_related_events_collection_method1() {<br><br>
+&nbsp;&nbsp; &nbsp;var event_cursor = db.weather_events.find().limit(events_to_process);<br><br>
+&nbsp;&nbsp; &nbsp;var cevent, nearby_events_record;<br><br>
+&nbsp;&nbsp; &nbsp;<br><br>
+&nbsp;&nbsp; &nbsp;db.weather_events_related.drop();</span></span></p>
+
+<p dir="ltr"><span style="color:#006400;"><span style="font-family: courier new,courier,monospace;">&nbsp;&nbsp; &nbsp;while (event_cursor.hasNext()) {<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;cevent = event_cursor.next();<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;nearby_events_record = get_nearby_events(cevent.indexnum,<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; cevent.location,<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; cevent.startdatetime,<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; max_distance,<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; max_minutes,<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; max_nearby_events);</span></span></p>
+
+<p dir="ltr"><span style="color:#006400;"><span style="font-family: courier new,courier,monospace;">&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;db.weather_events_related.insertOne(nearby_events_record);<br><br>
+&nbsp;&nbsp; &nbsp;}<br><br>
+}</span></span></p>
+
+<p dir="ltr"><span style="color:#006400;"><span style="font-family: courier new,courier,monospace;">function build_related_events_collection_method2() {<br><br>
+&nbsp;&nbsp; &nbsp;var event_cursor = db.weather_events.find().limit(events_to_process);<br><br>
+&nbsp;&nbsp; &nbsp;var nearby_events_array = [];<br><br>
+&nbsp;&nbsp; &nbsp;var cevent, nearby_events_record;<br><br>
+&nbsp;&nbsp; &nbsp;var batch_size = 10000;<br><br>
+&nbsp;&nbsp; &nbsp;var i = 0;<br><br>
+&nbsp;&nbsp; &nbsp;<br><br>
+&nbsp;&nbsp; &nbsp;db.weather_events_related.drop();</span></span></p>
+
+<p dir="ltr"><span style="color:#006400;"><span style="font-family: courier new,courier,monospace;">&nbsp;&nbsp; &nbsp;while (event_cursor.hasNext()) {<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;cevent = event_cursor.next();<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;nearby_events_record = get_nearby_events(cevent.indexnum,<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; cevent.location,<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; cevent.startdatetime,<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; max_distance,<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; max_minutes,<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; max_nearby_events);</span></span></p>
+
+<p dir="ltr"><span style="color:#006400;"><span style="font-family: courier new,courier,monospace;">&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;nearby_events_array.push(nearby_events_record);<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;i++;<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;if (i &gt;= batch_size) {<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;db.weather_events_related.insertMany(nearby_events_array);<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;nearby_events_array = [];<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;i = 0;<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;}<br><br>
+&nbsp;&nbsp; &nbsp;}<br><br>
+&nbsp;&nbsp; &nbsp;if (i &gt; 0)<br><br>
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;db.weather_events_related.insertMany(nearby_events_array);<br><br>
+}</span></span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">The Javascript file for the above example is attached <a href="https://w3-connections.ibm.com/wikis/form/api/wiki/1879f4b2-a135-4b6b-b50a-cff447409289/page/395b10aa-ed23-4134-b9c9-62ff92d39789/attachment/be580320-8c68-4258-9a86-cdc9ee587625/media/related_weather_events.js" lconnwikiparamwikiattachment="related_weather_events.js" target="_blank">here</a>. To execute we simply invoke mongo with the js file as parameter:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><span style="color:#B22222;"><span style="font-family: courier new,courier,monospace;">mongo ${pathToJsFile}/related_weather_events.js</span></span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">To update a single event using the Mongo Java driver we can do something like the following:</p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">public</span></span></span></strong> <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">static</span></span></span></strong> <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">void</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> <span style="background:silver;">updateRelatedEvent_WeatherEvents</span>(MongoTestDriver testDriver) {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MongoCollection&lt;Document&gt; weatherEvents = testDriver.</span></span></span><span style="color:#0000C0;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">database</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">.getCollection(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"weather_events"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MongoCollection&lt;Document&gt; weatherEventsRelated = testDriver.</span></span></span><span style="color:#0000C0;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">database</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">.getCollection(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"weather_events_related"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Document aggregateDoc;</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Integer eventId = 6;</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Document event = </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">null</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">;</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">int</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> minutesEitherSide = 500;</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">int</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> maxDistance = 5000;</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">int</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> maxNearbyEvents = 100;</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Document noNearbyEvents = </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> Document(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"_id"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,eventId.toString())</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .append(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"nearby_events"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,</span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> ArrayList&lt;Document&gt;())</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .append(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"nearby_events_count"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,0);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; UpdateOptions options = </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> UpdateOptions();</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; options.upsert(</span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">true</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; event = <em>findMatchingWeatherEvent</em>(weatherEvents, </span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"indexnum"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">, eventId);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">if</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> (event != </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">null</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">) {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; aggregateDoc = <em>findNearbyWeatherEvents</em>(weatherEvents, event, eventId, minutesEitherSide, maxDistance, maxNearbyEvents);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ &nbsp; &nbsp; &nbsp; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">if</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> (aggregateDoc != </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">null</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">) {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ weatherEventsRelated.replaceOne(<em>eq</em>(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"_id"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,eventId.toString()), aggregateDoc, options);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; } </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">else</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ weatherEventsRelated.replaceOne(<em>eq</em>(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"_id"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,eventId.toString()),
+ noNearbyEvents, 
+options);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ </span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">}</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">public</span></span></span></strong> <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">static</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> Document findMatchingWeatherEvent(MongoCollection&lt;Document&gt; weatherEvents, String idField, Integer id) {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Document result = </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">null</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">;</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MongoCursor&lt;Document&gt; docs = weatherEvents.find(<em>eq</em>(idField, id)).limit(1).iterator();</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">if</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> (docs.hasNext()) </span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; result = docs.next();</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">return</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> result;</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">}</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">public</span></span></span></strong> <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">static</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> Document findNearbyWeatherEvents(MongoCollection&lt;Document&gt; weatherEvents, </span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ Document event,</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ Integer eventId,</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">int</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> minutesEitherSide,</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">int</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> maxDistance,</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">int</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> maxNearbyEvents) {</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; AggregateIterable&lt;Document&gt; aggregateDocs;</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Document result = </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">null</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">;</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Document eventLoc = (Document)event.get(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"location"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Date startDateTime = (Date)event.get(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"startdatetime"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Date dateBefore = </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> Date(startDateTime.getTime() - minutesEitherSide * 1000 * 60);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Date dateAfter = </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> Date(startDateTime.getTime() + minutesEitherSide * 1000 * 60);</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;</p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; aggregateDocs = weatherEvents.aggregate(Arrays.<em>asList</em>(</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> Document(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$geoNear"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">, </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> Document(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"near"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">, eventLoc)&nbsp;&nbsp;&nbsp;&nbsp; </span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .append(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"spherical"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">, </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">true</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">)</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .append(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"query"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">, </span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> Document(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"startdatetime"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ </span></span></span><strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">new</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> Document(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$lt"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,dateAfter)</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; .append(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$gt"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">, dateBefore)))</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .append(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"maxDistance"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">, maxDistance)</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .append(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"num"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">, maxNearbyEvents)</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ .append(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"distanceField"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">, </span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"dist.calculated"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">)),</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>match</em>(<em>ne</em>(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"indexnum"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,eventId)),</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>project</em>(<em>fields</em>(<em>excludeId</em>(), </span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>computed</em>(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"event_id"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$indexnum"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">),</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>computed</em>(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"centerpointid"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">, eventId.toString()))),</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>group</em>(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$centerpointid"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>push</em>(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"nearby_events"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"$event_id"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">),</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>sum</em>(</span></span></span><span style="color:#2A00FF;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">"nearby_events_count"</span></span></span><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">,1))</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; );</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;</p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">if</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> (aggregateDocs.iterator().hasNext()) </span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; result = aggregateDocs.iterator().next();</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong><span style="color:#7F0055;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">return</span></span></span></strong><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;"> result;</span></span></span></p>
+
+<p dir="ltr" style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:normal;text-autospace:none;"><span style="color:black;"><span style="font-family:Courier New, Courier, monospace"><span style="font-size:8.0pt;">}</span></span></span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<h2 dir="ltr">Performance Comparison</h2>
+
+<table dir="ltr" height="97" border="1" width="739">
+	<tbody>
+		<tr>
+			<td style="width: 125px; background-color: rgb(47, 79, 79);">&nbsp;</td>
+			<td style="width: 125px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Events Processed</span></td>
+			<td style="width: 125px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Time (s)</span></td>
+			<td style="width: 125px; background-color: rgb(47, 79, 79);"><span style="color:#FFFFFF;">Rate (events per second)</span></td>
+		</tr>
+		<tr>
+			<td style="width: 125px;">IOC</td>
+			<td style="width: 125px;">250</td>
+			<td style="width: 125px;">400</td>
+			<td style="width: 125px;">0.625</td>
+		</tr>
+		<tr>
+			<td style="width: 125px; background-color: rgb(211, 211, 211);">
+			<p>Mongo - Windows</p>
+
+			<p>&nbsp;&nbsp; Method 1</p>
+
+			<p>&nbsp;&nbsp; Method 2</p>
+			</td>
+			<td style="width: 125px; background-color: rgb(211, 211, 211);">
+			<p>&nbsp;</p>
+
+			<p>50,000</p>
+
+			<p>50,000</p>
+			</td>
+			<td style="width: 125px; background-color: rgb(211, 211, 211);">
+			<p>&nbsp;</p>
+
+			<p>383</p>
+
+			<p>347</p>
+			</td>
+			<td style="width: 125px; background-color: rgb(211, 211, 211);">
+			<p>&nbsp;</p>
+
+			<p>130</p>
+
+			<p>144</p>
+			</td>
+		</tr>
+		<tr>
+			<td style="width: 125px;">
+			<p>Mongo - Linux</p>
+
+			<p>&nbsp;&nbsp; Method 1</p>
+
+			<p>&nbsp;&nbsp; Method 2</p>
+			</td>
+			<td style="width: 125px;">
+			<p>&nbsp;</p>
+
+			<p>50,000</p>
+
+			<p>50,000</p>
+			</td>
+			<td style="width: 125px;">
+			<p>&nbsp;</p>
+
+			<p>557</p>
+
+			<p>481</p>
+			</td>
+			<td style="width: 125px;">
+			<p>&nbsp;</p>
+
+			<p>&nbsp; 90</p>
+
+			<p>103</p>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">As before (<a lconnwikiparamwikipage="Set Up And Basic Tests" lconnwikimacro="wikilink" href="file:///wikis/home/wiki/Useful%20Info/page/Set%20Up%20And%20Basic%20Tests">link</a>),
+ Mongo performance is significantly better than DB2. Bear in mind the 
+output dataset is also richer in the Mongo case. Once again, Windows 
+performs better than Linux for Mongo. mongostat (sample output shown 
+below) shows the much higher insert rate in the case of Windows. The 
+reason for the performance difference is yet to be determined. Perhaps 
+Linux needs tuning to perform at its best.</p>
+
+<h3 dir="ltr">Windows:</h3>
+
+<p dir="ltr"><span style="color:#0000CD;"><span style="font-family: courier new,courier,monospace;">C:\mongodb\data&gt;mongostat<br><br>
+insert query update delete getmore command dirty used flushes 
+vsize&nbsp; res qrw arw net_in net_out 
+conn&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ time<br><br>
+&nbsp;&nbsp; 124&nbsp;&nbsp;&nbsp; *0&nbsp;&nbsp;&nbsp;&nbsp; 
+*0&nbsp;&nbsp;&nbsp;&nbsp; *0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+0&nbsp;&nbsp; 251|0&nbsp; 0.1% 9.2%&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0
+ 1.84G 654M 0|0 1|0&nbsp;&nbsp; 100k&nbsp;&nbsp; 92.2k&nbsp;&nbsp;&nbsp;
+ 7 May 22 16:53:05.747<br><br>
+&nbsp;&nbsp; 127&nbsp;&nbsp;&nbsp; *0&nbsp;&nbsp;&nbsp;&nbsp; 
+*0&nbsp;&nbsp;&nbsp;&nbsp; *0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+0&nbsp;&nbsp; 256|0&nbsp; 0.1% 9.2%&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0
+ 1.84G 654M 0|0 2|0&nbsp;&nbsp; 103k&nbsp;&nbsp; 93.2k&nbsp;&nbsp;&nbsp;
+ 7 May 22 16:53:06.746<br><br>
+&nbsp;&nbsp; 126&nbsp;&nbsp;&nbsp; *0&nbsp;&nbsp;&nbsp;&nbsp; 
+*0&nbsp;&nbsp;&nbsp;&nbsp; *0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+0&nbsp;&nbsp; 255|0&nbsp; 0.1% 9.2%&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0
+ 1.84G 654M 0|0 2|0&nbsp;&nbsp; 102k&nbsp;&nbsp; 92.8k&nbsp;&nbsp;&nbsp;
+ 7 May 22 16:53:07.747<br><br>
+&nbsp;&nbsp; 127&nbsp;&nbsp;&nbsp; *0&nbsp;&nbsp;&nbsp;&nbsp; 
+*0&nbsp;&nbsp;&nbsp;&nbsp; *0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+0&nbsp;&nbsp; 256|0&nbsp; 0.1% 9.2%&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0
+ 1.84G 654M 0|0 2|0&nbsp;&nbsp; 103k&nbsp;&nbsp; 93.8k&nbsp;&nbsp;&nbsp;
+ 7 May 22 16:53:08.747</span></span></p>
+
+<h3 dir="ltr">Linux:</h3>
+
+<p dir="ltr"><span style="color:#0000CD;"><span style="font-family: courier new,courier,monospace;">[root@dubperf-mongodb weather_events]# mongostat<br><br>
+insert query update delete getmore command dirty used flushes 
+vsize&nbsp;&nbsp; res qrw arw net_in net_out 
+conn&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ time<br><br>
+&nbsp;&nbsp;&nbsp; 82&nbsp;&nbsp;&nbsp; *0&nbsp;&nbsp;&nbsp;&nbsp; 
+*0&nbsp;&nbsp;&nbsp;&nbsp; *0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+0&nbsp;&nbsp; 166|0&nbsp; 0.0% 5.8%&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0
+ 3.16G 2.12G 0|0 1|0&nbsp; 65.8k&nbsp;&nbsp; 81.2k&nbsp;&nbsp;&nbsp; 2 
+May 22 16:54:08.926<br><br>
+&nbsp;&nbsp;&nbsp; 78&nbsp;&nbsp;&nbsp; *0&nbsp;&nbsp;&nbsp;&nbsp; 
+*0&nbsp;&nbsp;&nbsp;&nbsp; *0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+0&nbsp;&nbsp; 159|0&nbsp; 0.0% 5.8%&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0
+ 3.16G 2.12G 0|0 2|0&nbsp; 63.0k&nbsp;&nbsp; 80.0k&nbsp;&nbsp;&nbsp; 2 
+May 22 16:54:09.929<br><br>
+&nbsp;&nbsp;&nbsp; 74&nbsp;&nbsp;&nbsp; *0&nbsp;&nbsp;&nbsp;&nbsp; 
+*0&nbsp;&nbsp;&nbsp;&nbsp; *0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+0&nbsp;&nbsp; 150|0&nbsp; 0.0% 5.8%&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0
+ 3.16G 2.12G 0|0 2|0&nbsp; 59.4k&nbsp;&nbsp; 79.0k&nbsp;&nbsp;&nbsp; 2 
+May 22 16:54:10.928<br><br>
+&nbsp;&nbsp;&nbsp; 74&nbsp;&nbsp;&nbsp; *0&nbsp;&nbsp;&nbsp;&nbsp; 
+*0&nbsp;&nbsp;&nbsp;&nbsp; *0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+0&nbsp;&nbsp; 150|0&nbsp; 0.0% 5.8%&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0
+ 3.16G 2.12G 0|0 2|0&nbsp; 59.3k&nbsp;&nbsp; 78.9k&nbsp;&nbsp;&nbsp; 2 
+May 22 16:54:11.926</span></span></p>
+
+<p dir="ltr">&nbsp;</p></div></body></html>

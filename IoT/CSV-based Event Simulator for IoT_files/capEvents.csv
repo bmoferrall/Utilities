@@ -1,0 +1,4 @@
+area,category,certainty,headline,event,msgType,sender,severity,urgency,status,location,startdate,enddate,lastupdate
+Box 1,Security,Observed,Assault,Assault on woman by man,Alert,Brendan,Severe,Immediate,Complete,POINT(-93.1965880 44.9846060),2018-11-01 18:05:00,2018-11-01 18:07:00,2018-12-13 18:07:00
+Gate C,Health,Observed,Violation,Smoking violation,Alert,John,Moderate,Future,Complete,POINT(-93.1965780 44.9842060),2018-11-02 19:05:00,2018-11-02 19:06:00,2018-12-13 18:07:00
+Area A,Fire,Observed,Smoke,Smoke in waste bin,Alert,Martin,Severe,Immediate,InProgress,POINT(-93.1966780 44.9843060),2018-11-03 20:05:00,2018-11-08 19:06:00,2018-12-13 18:07:00

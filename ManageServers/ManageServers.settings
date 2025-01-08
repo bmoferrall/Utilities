@@ -1,0 +1,26 @@
+[OPTIONS]
+
+# Number of times the script will wait for a server to stop or start (delay of 10 seconds before each retry)
+numRetries=100
+#ERROR=0|WARNING=1|INFO=2|VERBOSE=3|DEBUG=4
+logLevel=3
+
+# Order to stop servers and nodes
+[STOPSERVERS]
+
+#node,server
+IICCltSvcsNode1,IICCltSvcsServer1
+IICDaAqSvcsNode1,IICDaAqSvcsServer1
+IICMgmtSvcsNode1,IICMgmtSvcsServer1
+IICRTCSvcsNode,IICRTCSvcsServer
+IICMDLSvcsNode,IICMDLSvcsServer
+
+# Order to start servers and nodes
+[STARTSERVERS]
+
+#node,server
+IICMDLSvcsNode,IICMDLSvcsServer
+IICRTCSvcsNode,IICRTCSvcsServer
+IICMgmtSvcsNode1,IICMgmtSvcsServer1
+IICDaAqSvcsNode1,IICDaAqSvcsServer1
+IICCltSvcsNode1,IICCltSvcsServer1

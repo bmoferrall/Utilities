@@ -1,0 +1,11 @@
+
+COUNT       HOSTNAME        SYSTEMAUTHID SESSIONAUTHID
+----------- --------------- ------------ -------------
+          1 9.161.161.55    DB2I1OWN     DB2I1OWN     
+          1 9.162.161.40    DB2I1OWN     DB2I1OWN     
+          1 dubperftest06c. DB2I1OWN     DB2I1OWN     
+          5 dubperftest06d. DB2I1OWN     DB2I1OWN     
+
+  4 record(s) selected.
+
+

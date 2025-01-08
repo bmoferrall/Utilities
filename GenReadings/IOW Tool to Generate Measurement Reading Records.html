@@ -1,0 +1,187 @@
+<html><head><title>IOW Tool to Generate Measurement Reading Records</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style type="text/css">TABLE { border-collapse: collapse; border-top: 1px; border-left: 1px; border-style: solid; margin: 4px; }TD, TH { border-bottom: 1px; border-right: 1px; border-style: solid; padding: 4px; }TH { background-color: #D8D8D8; }</style></head><body><div sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><h1 dir="ltr">About</h1>
+
+<p dir="ltr">The tool described below can be used to generate new 
+measurement reading records on the fly for the Water simulator. It can 
+be used both for normal functional testing and for load testing (the 
+rate and duration of records ingested can be controlled). Either current
+ or historical reading records can be generated.</p>
+
+<h1 dir="ltr">Set Up</h1>
+
+<p dir="ltr">Copy the attached script (<a href="https://w3-connections.ibm.com/wikis/form/api/wiki/1879f4b2-a135-4b6b-b50a-cff447409289/page/b62e57db-40b3-40f2-90a8-8695460233f9/attachment/bf7ec1ce-5fd4-4c0d-97b1-142a12260474/media/run_simulator.pl" lconnwikiparamwikiattachment="run_simulator.pl">link</a>) to <span style="color:#0000FF;">/opt/IBM/water/apps/simulator</span> on the application server. Run dos2unix and make executable:<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#0000FF;">dos2unix run_simulator.pl<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+chmod +x run_simulator.pl</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+The script is written in Perl. The default Perl installation on Red Hat 
+requires some additional modules before the script can be used. Use the 
+cpan utility to install the additional modules (install with yum if cpan
+ isn't present). Start the cpan program:<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#0000ff;">&gt; cpan</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+If this is the first time using cpan you will be prompted to initialize CPAN's configuration. Choose yes to auto-configure.<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+After auto-configuring, exit cpan to change one of the default options:<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#0000ff;">cpan&gt; quit</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Edit the following configuration file, e.g. using vi:<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#0000ff;">vi /usr/share/perl5/CPAN/Config.pm</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+change 'ask' -&gt; 'follow' in the indicated line:<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#0000ff;">'prerequisites_policy' =&gt; q[ask],</span></p>
+
+<p dir="ltr">to<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#0000ff;">&nbsp;'prerequisites_policy' =&gt; q[follow],</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+save the file, then restart cpan.<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#0000FF;">&gt;cpan</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Install the necessary modules as follows:<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#0000ff;">cpan&gt; force install Module::Build<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+cpan&gt; force install DateTime</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Finally, exit from cpan:<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#0000ff;">cpan&gt; quit</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+The script should be ready for use.</p>
+
+<h1 dir="ltr">Usage</h1>
+
+<p dir="ltr">The script requires a configuration file called '<span style="color:#0000FF;">event_template.csv</span>'
+ to be present in the same directory. This lists all the measurement 
+aliases (and threshold ranges) for which you want to generate reading 
+records. For example, if you have the sample Sunshine model installed, 
+the following template will generate reading records for each of the ten
+ Water Usage Meters in the model:<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#008000;"># measurement_alias,normal_range_start-normal_range_end,action_range_start-action_range_end</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#800080;">water_usage_1,0-10.0,20.0-0<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+water_usage_2,0-10.0,20.0-30<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+water_usage_3,0-10.0,20.0-30<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+water_usage_4,0-10.0,20.0-30<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+water_usage_5,0-10.0,20.0-30<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+water_usage_6,0-10.0,20.0-30<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+water_usage_7,0-10.0,20.0-30<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+water_usage_8,0-10.0,20.0-30<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+water_usage_9,0-10.0,20.0-30<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+water_usage_10,0-10.0,20.0-30</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+The first column is the 'measurement alias' for the measurement. The 
+second column defines the 'normal' value range and the third column 
+defines the 'action' value range. These are based on the threshold 
+definition in the input model. For example:<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#0000FF;">&lt;cim:RSM_Measurement.Threshold&gt;</span><strong sandbox="allow-forms allow-same-origin allow-scripts allow-popups">0/10:0</strong><span style="color:#0000FF;">&lt;/cim:RSM_Measurement.Threshold&gt;</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#0000FF;">&lt;cim:RSM_Measurement.Threshold&gt;</span>10/20:1<span style="color:#0000FF;">&lt;/cim:RSM_Measurement.Threshold&gt;</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#0000FF;">&lt;cim:RSM_Measurement.Threshold&gt;</span><strong sandbox="allow-forms allow-same-origin allow-scripts allow-popups">20/30:2</strong><span style="color:#0000FF;">&lt;/cim:RSM_Measurement.Threshold&gt;</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Before starting the ingestion process, and assuming the sample model has
+ been loaded, run the attached database maintenance script to optimize 
+database performance (<a wiki="Useful Info" lconnwikiparamwikiattachment="db_maint.sh" href="https://w3-connections.ibm.com/wikis/home?lang=en-us#!/wiki/Useful%20Info/page/Database%20Maintenance%20and%20Monitoring%20Scripts" id="wikiLink1427141315545" page="Database Maintenance and Monitoring Scripts">link</a>).
+ If the sample model hasn't been loaded, use the script to populate the 
+reading table with a couple of thousand records, then run the 
+maintenance scirpt. To run the maintenance script, copy it to <span style="color:#0000FF;">/datahome/db2inst2</span> on the database server and run the following commands as '<span style="color:#0000FF;">root</span>' user:<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#0000FF;">dos2unix db_maint.sh<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+chmod +x db_maint.sh<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="font-family:arial,helvetica,sans-serif;">su - db2inst2 -c "/datahome/db2inst2/db_maint.sh -d WIHDB -s 'WIH WCP CSO SUNSHINE'"</span></span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Note that, if thresholds weren't defined in the model, you can add them by running the following commands as user 'db2inst2':<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="font-family:courier new,courier,monospace;"><span style="color:#0000FF;"><span style="font-family: arial,helvetica,sans-serif;">su - db2inst2<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+db2 connect to wihdb<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+db2 "insert into wih.MEASUREMENT_THRESHOLD 
+(MEASUREMENT_ID,RANGE_START,RANGE_END,STATUS) select distinct 
+MEASUREMENT_ID,0.0,10.0,0 from wih.MEASUREMENT"<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+db2 "insert into wih.MEASUREMENT_THRESHOLD 
+(MEASUREMENT_ID,RANGE_START,RANGE_END,STATUS) select distinct 
+MEASUREMENT_ID,10.0,20.0,1 from wih.MEASUREMENT"<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+db2 "insert into wih.MEASUREMENT_THRESHOLD 
+(MEASUREMENT_ID,RANGE_START,RANGE_END,STATUS) select distinct 
+MEASUREMENT_ID,20.0,30.0,2 from wih.MEASUREMENT"</span></span></span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="font-family: arial,helvetica,sans-serif;"><span style="color:#0000FF;">db2 connect reset</span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+Usage instructions for the script are as follows:</span></p>
+
+<table dir="ltr" width="813" height="448" border="1">
+	<tbody sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+		<tr sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			<td style="background-color: rgb(47, 79, 79);"><span style="color:#ffffff;"><span style="font-size: 12px;"><strong sandbox="allow-forms allow-same-origin allow-scripts allow-popups">&nbsp;Usage</strong>:
+ [perl] run_simulator.pl [-h] | -s 'rate1=duration1,rate2=duration2,...'
+ -t threshold_count -i time_increment -d days_in_past -r repeat_count</span></span>'</td>
+		</tr>
+		<tr sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			<td style="background-color: rgb(229, 228, 226);">
+			<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><strong sandbox="allow-forms allow-same-origin allow-scripts allow-popups">&nbsp;Required parameters</strong>:<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			&nbsp;&nbsp;&nbsp; -s: comma-separated list of phases as rate=duration pairs, where<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em sandbox="allow-forms allow-same-origin allow-scripts allow-popups">rate</em>&nbsp;is the number of events per second and <em sandbox="allow-forms allow-same-origin allow-scripts allow-popups">duration</em> is the time in seconds for the simulator to run at this event rate;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; the requested rate will take the value of <em sandbox="allow-forms allow-same-origin allow-scripts allow-popups">batch.max</em> in simulator.properties into account; for example, if the requested rate is 10 per<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; second,<em sandbox="allow-forms allow-same-origin allow-scripts allow-popups"> batch</em>=true and <em sandbox="allow-forms allow-same-origin allow-scripts allow-popups">batch.max</em>=500, the value of <em sandbox="allow-forms allow-same-origin allow-scripts allow-popups">send.interval</em> will be set by the script to 50 seconds to achieve the desired event rate;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			&nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; use a fraction for the rate 
+parameter if you need a value that is higher than one per second; for 
+example, 0.1 would result in 1 event every<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 10 seconds; if your 
+requested rate is low (&lt; 10 per second) it is recommended that you 
+set the value of <em sandbox="allow-forms allow-same-origin allow-scripts allow-popups">batch</em> in simulator.properties to false<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; to ensure a steady event flow rate</p>
+
+			<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><strong sandbox="allow-forms allow-same-origin allow-scripts allow-popups">&nbsp;Optional parameters</strong>:<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			&nbsp;&nbsp;&nbsp; -t:&nbsp; number of sub-threshold events to 
+generate before generating an event that exceeds the threshold value (0 
+for none)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			&nbsp;&nbsp;&nbsp; -d: number of days in past from whence to start generating reading times (defaults to 180 days)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			&nbsp;&nbsp;&nbsp; -i:&nbsp; number of seconds to increment the date 
+time for an event after each iteration of the base template events 
+(default 10)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			&nbsp;&nbsp;&nbsp; -p: pause time in seconds between each phase (default 120 seconds)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			&nbsp;&nbsp;&nbsp; -r: number of readings in a row to generate for each measurement alias<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			&nbsp;&nbsp;&nbsp; -l:&nbsp; logging level (0=ERROR,1=WARNING,2=INFO,3=VERBOSE)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			&nbsp;&nbsp;&nbsp; -h: print usage statement</p>
+			</td>
+		</tr>
+		<tr sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			<td style="background-color: rgb(255, 255, 255); height: 1px;">&nbsp;</td>
+		</tr>
+		<tr sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			<td style="background-color: rgb(229, 228, 226);">
+			<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><strong sandbox="allow-forms allow-same-origin allow-scripts allow-popups">&nbsp;Example 1</strong>: <strong sandbox="allow-forms allow-same-origin allow-scripts allow-popups">./run_simulator.pl&nbsp;-s 100=1200 -t 1000 -i 10 -d 180</strong><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			&nbsp;&nbsp;&nbsp;&nbsp; This combination of parameters will generate the following load:<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; one load phase is 
+defined, lasting 20 minutes at a rate of 100 per second, i.e., 120,000 
+records will be input over the 20 minute period;<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; a measurement value 
+in the 'action' range is generated once every 1000 records (-t 1000);<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; the first timestamp 
+is generated 180 days in the past (-d 180); the timestamp generated for 
+each measurement alias in 'event_template.csv'<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; is incremented by 10 seconds (-i 10) each time</p>
+
+			<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><strong sandbox="allow-forms allow-same-origin allow-scripts allow-popups">&nbsp;Example 2</strong>: <strong sandbox="allow-forms allow-same-origin allow-scripts allow-popups">./run_simulator.pl</strong>&nbsp;<strong sandbox="allow-forms allow-same-origin allow-scripts allow-popups">-s 250=1200 -t 1000 -i 10 -d 180</strong><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			&nbsp;&nbsp;&nbsp; The script will input readings at a rate of 250 
+per second for 20 minutes and 300,000 records will be generated in 
+total.</p>
+
+			<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><strong sandbox="allow-forms allow-same-origin allow-scripts allow-popups">&nbsp;Example 3</strong>: <strong sandbox="allow-forms allow-same-origin allow-scripts allow-popups">./run_simulator.pl&nbsp;-s 100=1200,250=1200 -t 1000 -i 10 -d 180 -p 60</strong><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			&nbsp;&nbsp;&nbsp; This will run the sample loads from Examples 1 and 2 consecutively, with 60 seconds between each phase.</p>
+
+			<p sandbox="allow-forms allow-same-origin allow-scripts allow-popups">&nbsp;<strong sandbox="allow-forms allow-same-origin allow-scripts allow-popups">Example 4: ./run_simulator.pl -s 0.2=60 -t 0 -i 10 -d 180</strong><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+			&nbsp;&nbsp;&nbsp; Assuming <em sandbox="allow-forms allow-same-origin allow-scripts allow-popups">batch.max</em>=1, this will generate a reading every 5 seconds for 60 seconds (i.e., 12 records in total)</p>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<p dir="ltr"><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+After ingesting the readings run the maintenance script again. It's also
+ recommended that you set up a cron task to run the maintenance script 
+nightly. For example, to configure it the be run nightly at 2am (for 
+root user):<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+<span style="color:#0000FF;">0 2 * * * <span style="font-family: courier new,courier,monospace;">su - db2inst2 -c "/datahome/db2inst2/db_maint.sh -d WIHDB -s 'WIH WCP CSO SUNSHINE'"</span></span><br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;</p></div></body></html>

@@ -1,0 +1,75 @@
+Fri Aug 10 11:54:50 IST 2018
+
+DB_NAME    AGENT_ID             NSUBAGENTS           APP_NAME             CUR_STATE 
+---------- -------------------- -------------------- -------------------- ----------
+IOCDATA                   47733                    1 db2stmm              CONNECTED 
+IOCDATA                   47744                    1 db2fw2               CONNECTED 
+IOCDATA                   47763                    1 db2fw1               CONNECTED 
+IOCDATA                   47767                    1 db2wlmd              CONNECTED 
+IOCDATA                   47770                    1 db2fw3               CONNECTED 
+IOCDATA                   47775                    1 db2fw7               CONNECTED 
+IOCDATA                   47778                    1 db2lused             CONNECTED 
+IOCDATA                   47779                    1 db2evmg_DB2DETAILDEA CONNECTED 
+IOCDATA                   47780                    1 db2fw4               CONNECTED 
+IOCDATA                   47783                    1 db2jcc_application   CONNECTED 
+IOCDATA                   47784                    1 db2fw5               CONNECTED 
+IOCDATA                   47788                    1 db2fw0               CONNECTED 
+IOCDATA                   47795                    1 db2fw6               CONNECTED 
+IOCDATA                   47812                    1 db2pcsd              CONNECTED 
+IOCDATA                   47813                    1 db2taskd             CONNECTED 
+IOCDB                      1010                    1 db2stmm              UOWWAIT   
+IOCDB                      1011                    1 db2taskd             CONNECTED 
+IOCDB                      1012                    1 db2wlmd              CONNECTED 
+IOCDB                      1013                    1 db2lused             CONNECTED 
+IOCDB                      1014                    1 db2fw0               CONNECTED 
+IOCDB                      1015                    1 db2fw1               CONNECTED 
+IOCDB                      1016                    1 db2fw2               CONNECTED 
+IOCDB                      1017                    1 db2fw3               CONNECTED 
+IOCDB                      1018                    1 db2fw4               CONNECTED 
+IOCDB                      1019                    1 db2fw5               CONNECTED 
+IOCDB                      1020                    1 db2fw6               CONNECTED 
+IOCDB                      1021                    1 db2fw7               CONNECTED 
+IOCDB                      1022                    1 db2pcsd              CONNECTED 
+IOCDB                      1023                    1 db2evmg_DB2DETAILDEA CONNECTED 
+IOCDB                     39781                    1 db2jcc_application   UOWWAIT   
+IOCDB                     41311                    1 db2jcc_application   UOWWAIT   
+IOCDB                     44510                    1 db2jcc_application   UOWWAIT   
+IOCDB                     44540                    1 db2jcc_application   UOWWAIT   
+IOCDB                     47014                    1 db2jcc_application   UOWWAIT   
+IOCDB                     47227                    1 db2jcc_application   UOWWAIT   
+IOCDB                     47436                    1 db2jcc_application   UOWWAIT   
+IOCDB                     47754                    1 db2jcc_application   CONNECTED 
+IOCDB                     47896                    1 db2jcc_application   UOWWAIT   
+IOCDB                     47944                    1 db2jcc_application   UOWWAIT   
+IOCDB                     47998                    1 db2jcc_application   UOWWAIT   
+IOCDB                     48004                    1 db2jcc_application   UOWWAIT   
+IOCDB                     48072                    1 db2jcc_application   UOWWAIT   
+IOCDB                     48085                    1 db2jcc_application   UOWWAIT   
+IOCDB                     48100                    1 db2jcc_application   UOWWAIT   
+IOCDB                     48207                    1 db2jcc_application   UOWWAIT   
+WIHDB                       700                    1 db2stmm              CONNECTED 
+WIHDB                       701                    1 db2taskd             CONNECTED 
+WIHDB                       702                    1 db2wlmd              CONNECTED 
+WIHDB                       703                    1 db2lused             CONNECTED 
+WIHDB                       704                    1 db2fw0               CONNECTED 
+WIHDB                       705                    1 db2fw1               CONNECTED 
+WIHDB                       706                    1 db2fw2               CONNECTED 
+WIHDB                       707                    1 db2fw3               CONNECTED 
+WIHDB                       708                    1 db2fw4               CONNECTED 
+WIHDB                       709                    1 db2fw5               CONNECTED 
+WIHDB                       710                    1 db2fw6               CONNECTED 
+WIHDB                       711                    1 db2fw7               CONNECTED 
+WIHDB                       712                    1 db2pcsd              CONNECTED 
+WIHDB                       713                    1 db2evmg_DB2DETAILDEA CONNECTED 
+WIHDB                      4259                    1 db2jcc_application   UOWWAIT   
+WIHDB                     19447                    1 db2jcc_application   UOWWAIT   
+WIHDB                     42854                    1 db2jcc_application   UOWWAIT   
+WIHDB                     44702                    1 db2jcc_application   UOWWAIT   
+WIHDB                     44709                    1 db2jcc_application   UOWWAIT   
+WIHDB                     47804                    1 db2jcc_application   CONNECTED 
+WIHDB                     48253                    1 db2bp                UOWEXEC   
+WIHDB                     54714                    1 db2jcc_application   UOWWAIT   
+
+  67 record(s) selected.
+
+

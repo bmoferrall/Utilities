@@ -1,0 +1,16 @@
+
+MEM_TYPE             DBNAME               KB_COMMITTED         MAX_COMMIT_KB        IN_USE_KB           
+-------------------- -------------------- -------------------- -------------------- --------------------
+DBMS                 -                                  112064               144384               102592
+FMP                  -                                   22784                22784                 2304
+PRIVATE              -                                  152960               152960               107392
+DATABASE             WIHDB                             4317440              5539008              4166912
+APPLICATION          WIHDB                               52864                53376                17856
+DATABASE             IOCDB                              247296               365440               238464
+APPLICATION          IOCDB                               18496                21248                 9088
+DATABASE             IOCDATA                            255296               377536               254720
+APPLICATION          IOCDATA                              4608               160256                 2176
+
+  9 record(s) selected.
+
+

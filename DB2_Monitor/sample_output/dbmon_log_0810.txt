@@ -1,0 +1,284 @@
+Log Start Time: Fri Aug 10 11:53:39 IST 2018
+### --------------------------------------- ###
+### Current User: db2i1own ###
+### Collecting stats for instance "db2i1own" and database(s) "WIHDB" ###
+### Starting iteration  1 of 1 ###
+### Initialising WIHDB for stats collection ###
+
+   Database Connection Information
+
+ Database server        = DB2/LINUXX8664 10.5.7
+ SQL authorization ID   = DB2I1OWN
+ Local database alias   = WIHDB
+
+DB21034E  The command was processed as an SQL statement because it was not a 
+valid Command Line Processor command.  During SQL processing it returned:
+SQL0204N  "DBMON.DUBPERF_DB_DIFF" is an undefined name.  SQLSTATE=42704
+DB21034E  The command was processed as an SQL statement because it was not a 
+valid Command Line Processor command.  During SQL processing it returned:
+SQL0204N  "DBMON.DUBPERF_DB_START" is an undefined name.  SQLSTATE=42704
+DB21034E  The command was processed as an SQL statement because it was not a 
+valid Command Line Processor command.  During SQL processing it returned:
+SQL0204N  "DBMON.DUBPERF_DB_END" is an undefined name.  SQLSTATE=42704
+DB21034E  The command was processed as an SQL statement because it was not a 
+valid Command Line Processor command.  During SQL processing it returned:
+SQL0204N  "DBMON.DUBPERF_MONCONTAINER_DIFF" is an undefined name.  
+SQLSTATE=42704
+DB21034E  The command was processed as an SQL statement because it was not a 
+valid Command Line Processor command.  During SQL processing it returned:
+SQL0204N  "DBMON.DUBPERF_MONCONTAINER_START" is an undefined name.  
+SQLSTATE=42704
+DB21034E  The command was processed as an SQL statement because it was not a 
+valid Command Line Processor command.  During SQL processing it returned:
+SQL0204N  "DBMON.DUBPERF_MONCONTAINER_END" is an undefined name.  
+SQLSTATE=42704
+DB21034E  The command was processed as an SQL statement because it was not a 
+valid Command Line Processor command.  During SQL processing it returned:
+SQL0204N  "DBMON.DUBPERF_MONINDEX_DIFF" is an undefined name.  SQLSTATE=42704
+DB21034E  The command was processed as an SQL statement because it was not a 
+valid Command Line Processor command.  During SQL processing it returned:
+SQL0204N  "DBMON.DUBPERF_MONINDEX_START" is an undefined name.  SQLSTATE=42704
+DB21034E  The command was processed as an SQL statement because it was not a 
+valid Command Line Processor command.  During SQL processing it returned:
+SQL0204N  "DBMON.DUBPERF_MONINDEX_END" is an undefined name.  SQLSTATE=42704
+DB21034E  The command was processed as an SQL statement because it was not a 
+valid Command Line Processor command.  During SQL processing it returned:
+SQL0204N  "DBMON.DUBPERF_MONTABLE_DIFF" is an undefined name.  SQLSTATE=42704
+DB21034E  The command was processed as an SQL statement because it was not a 
+valid Command Line Processor command.  During SQL processing it returned:
+SQL0204N  "DBMON.DUBPERF_MONTABLE_START" is an undefined name.  SQLSTATE=42704
+DB21034E  The command was processed as an SQL statement because it was not a 
+valid Command Line Processor command.  During SQL processing it returned:
+SQL0204N  "DBMON.DUBPERF_MONTABLE_END" is an undefined name.  SQLSTATE=42704
+DB21034E  The command was processed as an SQL statement because it was not a 
+valid Command Line Processor command.  During SQL processing it returned:
+SQL0204N  "DBMON.DUBPERF_MONTABLESPACE_DIFF" is an undefined name.  
+SQLSTATE=42704
+DB21034E  The command was processed as an SQL statement because it was not a 
+valid Command Line Processor command.  During SQL processing it returned:
+SQL0204N  "DBMON.DUBPERF_MONTABLESPACE_START" is an undefined name.  
+SQLSTATE=42704
+DB21034E  The command was processed as an SQL statement because it was not a 
+valid Command Line Processor command.  During SQL processing it returned:
+SQL0204N  "DBMON.DUBPERF_MONTABLESPACE_END" is an undefined name.  
+SQLSTATE=42704
+************************************
+Creating DUBPERF_DB_Tables
+************************************
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+************************************************
+NEW MAR15: Creating DUBPERF_MONTABLESPACE Tables
+************************************************
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+************************************
+Creating DUBPERF_MONCONTAINER Tables
+************************************
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+************************************
+Creating DUBPERF_MONINDEX Tables
+************************************
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+************************************
+Creating DUBPERF_MONTABLE Tables
+************************************
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+************************************
+END DUBPERF TABLE CREATION
+************************************
+************************************
+TAKING DUBPERF_DB START SNAPSHOT
+************************************
+DB20000I  The SQL command completed successfully.
+
+************************************************
+NEW MAR15: Taking DUBPERF_MONTABLESPACE Snapshot
+************************************************
+DB20000I  The SQL command completed successfully.
+
+******************************************
+TAKING DUBPERF_MONCONTAINER START SNAPSHOT
+******************************************
+DB20000I  The SQL command completed successfully.
+
+******************************************
+TAKING DUBPERF_MONINDEX START SNAPSHOT
+******************************************
+DB20000I  The SQL command completed successfully.
+
+******************************************
+TAKING DUBPERF_MONTABLE START SNAPSHOT
+******************************************
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+******************************************
+END OF DUBPERF START SNAPSHOTS
+******************************************
+DB20000I  The SQL command completed successfully.
+DB20000I  The SQL command completed successfully.
+### Collecting stats for db WIHDB ###
+
+   Database Connection Information
+
+ Database server        = DB2/LINUXX8664 10.5.7
+ SQL authorization ID   = DB2I1OWN
+ Local database alias   = WIHDB
+
+************************************
+TAKING DUBPERF_DB END SNAPSHOT
+************************************
+DB20000I  The SQL command completed successfully.
+
+****************************************************
+NEW MAR15: Taking DUBPERF_MONTABLESPACE End Snapshot
+****************************************************
+DB20000I  The SQL command completed successfully.
+
+************************************
+TAKING DBMON.DUBPERF_MONCONTAINER END SNAPSHOT
+************************************
+DB20000I  The SQL command completed successfully.
+
+************************************
+TAKING DUBPERF_MONINDEX END SNAPSHOT
+************************************
+DB20000I  The SQL command completed successfully.
+
+************************************
+TAKING DUBPERF_MONTABLE END SNAPSHOT
+************************************
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+************************************
+END OF DUBPERF END SNAPSHOTS
+************************************
+************************************
+CAPTURING DUBPERF_DB DIFF DATA
+************************************
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+******************************************
+GENERATING DUBPERF_MONTABLESPACE DIFF DATA
+******************************************
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+****************************************
+CAPTURING DUBPERF_MONCONTAINER DIFF DATA
+****************************************
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+****************************************
+CAPTURING DUBPERF_MONINDEX DIFF DATA
+****************************************
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+****************************************
+CAPTURING DUBPERF_MONTABLE DIFF DATA
+****************************************
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+DB20000I  The SQL command completed successfully.
+
+****************************************
+END OF DUBPERF DIFF DATA CAPTURE
+****************************************
+DB20000I  The SQL command completed successfully.
+
+   Database Connection Information
+
+ Database server        = DB2/LINUXX8664 10.5.7
+ SQL authorization ID   = DB2I1OWN
+ Local database alias   = WIHDB
+
+DB20000I  The SQL command completed successfully.
+### Iteration 1 complete ###
+### All 1 iteration(s) complete ###
+### Output has been saved in compressed form to the directory "/var/log/db/mon/10/WIHDB" ###

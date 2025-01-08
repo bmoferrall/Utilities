@@ -1,0 +1,235 @@
+<html><head><title>Registering Sample WIoT Analytic Function</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style type="text/css">TABLE { border-collapse: collapse; border-top: 1px; border-left: 1px; border-style: solid; margin: 4px; }TD, TH { border-bottom: 1px; border-right: 1px; border-style: solid; padding: 4px; }TH { background-color: #D8D8D8; }</style></head><body><div sandbox="allow-forms allow-same-origin allow-scripts allow-popups"><h1 dir="ltr">Introduction</h1>
+
+<p dir="ltr">This page will describe the steps to create and register a 
+custom Analytic function in Watson IoT. It will also show how the 
+function can then be used to create derived metrics for a device. A 
+schematic describing the relationship between the data lake and Analytic
+ functions is shown below:</p>
+
+<p dir="ltr"><img id="1548929192115_0" src="Registering%20Sample%20WIoT%20Analytic%20Function_files/editor_image_926494c2-1e31-44f2-8850-96688e72a2a8.png" width="409" height="148"></p>
+
+<p dir="ltr">The device and interfaces used in this example were set up using the node red flow described <a lconnwikimacro="wikilink" wiki="Useful Info" href="/wikis/home/wiki/Useful%20Info/page/End-to-end%20IoT%20Device%20Set%20Up%20-%20Automation%20using%20Node%20Red" id="wikiLink1548930890719" page="End-to-end IoT Device Set Up - Automation using Node Red" lconnwikiparamwikipage="End-to-end IoT Device Set Up - Automation using Node Red">here</a>.</p>
+
+<p dir="ltr">The steps outlined here are based on those shared by Justin
+ Dyer of the Watson IoTCS team for the current version of IoT's Analytic
+ service.</p>
+
+<h1 dir="ltr">More Information</h1>
+
+<p dir="ltr">More details about Analytic functions can be found <a href="https://dataplatform.cloud.ibm.com/analytics/notebooks/v2/e7e6776d-cd1b-454e-a057-4b2d41e8fabc/view?access_token=6df9235f45080086f811287142c8cfa39ace0d2f6baf835444541bb6cf32fb6e" rel="noopener noreferrer" target="_blank">here</a> (some of which is a little outdated).</p>
+
+<p dir="ltr">A change log for the Analytic service is maintained <a href="https://github.com/ibm-watson-iot/functions/wiki/Change-Log" rel="noopener noreferrer" target="_blank">here</a>.</p>
+
+<p dir="ltr">Watson's Analytic libraries use <a href="https://pandas.pydata.org/pandas-docs/stable/10min.html" rel="noopener noreferrer" target="_blank">pandas&nbsp;dataframes</a> as the main storage structure for processing analytic pipelines. <a href="https://www.sqlalchemy.org/" rel="noopener noreferrer" target="_blank">SQL&nbsp;Alchemy</a> is used for Database processing (good starter tutorial by the project founder/developer <a href="https://www.youtube.com/watch?time_continue=11&amp;v=woKYyhLCcnU" rel="noopener noreferrer" target="_blank">here</a>).</p>
+
+<h1 dir="ltr">Source Code</h1>
+
+<p dir="ltr">Source code for the example presented below is available <a href="https://w3-connections.ibm.com/wikis/form/api/wiki/1879f4b2-a135-4b6b-b50a-cff447409289/page/a539616a-c768-43aa-9ce9-8982606ee1d0/attachment/b162cdbe-6bdb-48f6-8dcb-8acdac2e481b/media/AS_Custom_Function.zip" lconnwikiparamwikiattachment="AS_Custom_Function.zip" target="_blank">here</a>.</p>
+
+<h1 dir="ltr">Set Up Steps</h1>
+
+<h2 dir="ltr">Step 1: Create repository and upload code</h2>
+
+<p dir="ltr">The first step is to create a (private) Github repository (details <a href="https://www.ibm.com/support/knowledgecenter/SSQP8H/iot/analytics/as_set_up_repository.html" rel="noopener noreferrer" target="_blank">here</a>) where the custom (python) code will be stored. The folder/file structure is shown in the two images below</p>
+
+<p dir="ltr"><img id="1548930107985_0" src="Registering%20Sample%20WIoT%20Analytic%20Function_files/editor_image_764a9e1d-2009-4963-8105-8a9210e7d6ce.png" width="632" height="354"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><img id="1548930177153_0" src="Registering%20Sample%20WIoT%20Analytic%20Function_files/editor_image_fed6db74-d90a-4ac2-88ab-597bab23e709.png" width="630" height="183"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">Contents of setup.py and __init__.py:</p>
+
+<p dir="ltr"><img id="1548930288613_0" src="Registering%20Sample%20WIoT%20Analytic%20Function_files/editor_image_e26dabf8-3faf-4fe4-8ab7-ee9d2d9601fb.png" width="289" height="254">&nbsp;&nbsp; <img id="1548930336523_0" src="Registering%20Sample%20WIoT%20Analytic%20Function_files/editor_image_c834313f-4feb-461c-842e-b001c692f38a.png" width="325" height="129"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">The&nbsp; main module should extend one of the base classes
+ in the 'iotfunctions' library ('BaseTransformer: adds new columns to a 
+dataframe, BaseAggregator: aggregates a dataframe). The class should 
+contain a url variable pointing to the git repository endpoint (this is 
+used by Watson to register the function). The __init__ method should 
+initialize input/output fields (used by Watson to build UI widgets with 
+the correct inputs/outputs and inferred data types). The framework will 
+call the execute() method, which must return a dataframe with the 
+desired modifications.</p>
+
+<p dir="ltr"><img id="1548932521017_0" src="Registering%20Sample%20WIoT%20Analytic%20Function_files/editor_image_e2d39725-064f-4cb1-8022-0b51e0ad259a.png" width="681" height="813"></p>
+
+<h2 dir="ltr">Step 2: Jupyter Notebook</h2>
+
+<p dir="ltr">Create a Jupyter notebook project to load, test and register the function. The <a href="https://www.anaconda.com/download/" rel="noopener noreferrer" target="_blank">Anaconda</a> distribution was used for these tests; Watson Studio could also be used:</p>
+
+<p dir="ltr"><img id="1548932789975_0" src="Registering%20Sample%20WIoT%20Analytic%20Function_files/editor_image_dbf78c2f-bb1c-4886-84ae-f76045afe818.png" width="694" height="436"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">The first step is to import DB2 and 'iotfunctions' 
+libraries if not already installed (see screenshot above). The full set 
+of steps in this example are shown below:</p>
+
+<p dir="ltr"><span style="color:#0000ff;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;"># In[1] (install ibm_db_sa and iotfunctions libraries):</span></span></span></p>
+
+<p dir="ltr"><span style="color:#008000;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;">get_ipython().system(u'pip install ibm_db --upgrade')<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+get_ipython().system(u'pip install ibm_db_sa --upgrade')</span></span></span></p>
+
+<p dir="ltr"><span style="color:#008000;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;">get_ipython().system(u'pip install git+https://@github.com/ibm-watson-iot/functions.git@ --upgrade')<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+get_ipython().system(u'pip install --user 
+git+https://1917daa22b392a9a955cbd6f28bbac41a3a84149@github.com/bmoferrall/FullAlertCategory.git@
+ --upgrade')</span></span></span></p>
+
+<p dir="ltr"><span style="color:#0000ff;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;"># In[2] (initialize DB2 and Cloud Object Storage credentials):</span></span></span></p>
+
+<p dir="ltr"><span style="color:#008000;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;">credentials = {<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "connection" : "dashdb",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "host": "dashdb-entry-yp-dal09-09.services.dal.bluemix.net",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "password": "3q1Qu_qiFBL_",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "port": 50000,<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "database": "BLUDB",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "db": "BLUDB",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "username": "dash10952",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "tenant_id":"IOC_Dev",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "tennant_id":"IOC_Dev",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "as_api_host": "api-us.connectedproducts.internetofthings.ibmcloud.com",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "as_api_key" : "a-9kpzic-cfbqvnuh2h",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "as_api_token" : "**************",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "objectStorage": {<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "region": "us-south",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "url": "s3-api.us-geo.objectstorage.softlayer.net",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "username": "oicZqbghu77srSuPy2qW",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "password": "**************"<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; },<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; "config": {<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "objectStorageEndpoint": "https://s3-api.us-geo.objectstorage.softlayer.net",<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "bos_runtime_bucket": "bmof-iociot-buckets"<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; }<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+}</span></span></span></p>
+
+<p dir="ltr"><span style="color:#0000ff;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;"># In[3] (set up environment variables for the Analytic libraries):</span></span></span></p>
+
+<p dir="ltr"><span style="color:#008000;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;">import pandas as pd<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+import os</span></span></span></p>
+
+<p dir="ltr"><span style="color:#008000;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;">os.environ['DB_CONNECTION_STRING']
+ = 'DATABASE=%s;HOSTNAME=%s;PORT=%s;PROTOCOL=TCPIP;UID=%s;PWD=%s;' 
+%(credentials["database"],credentials["host"],credentials["port"],credentials["username"],credentials["password"])<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+os.environ['API_BASEURL'] = 'https://%s' %credentials['as_api_host']<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+os.environ['API_KEY'] = credentials['as_api_key']<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+os.environ['API_TOKEN'] = credentials['as_api_token']</span></span></span></p>
+
+<p dir="ltr"><span style="color:#0000ff;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;"># In[4] (load necessary libraries):</span></span></span></p>
+
+<p dir="ltr"><span style="color:#008000;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;">import datetime as dt<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+import json<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, func<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+from iotfunctions.bif import IoTCosFunction<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+from iotfunctions.metadata import EntityType, make_sample_entity<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+from iotfunctions.db import Database<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+from iotfunctions.preprocessor import BaseTransformer, BaseDatabaseLookup, ComputationsOnStringArray<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+from iotfunctions.util import cosSave,cosLoad</span></span></span></p>
+
+<p dir="ltr"><span style="color:#0000ff;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;"># In[5] (Test credentials by making a sample entity):</span></span></span></p>
+
+<p dir="ltr"><span style="color:#008000;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;">db_schema = None<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+db = Database(credentials=credentials)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+entity = make_sample_entity(db=db,&nbsp; name='ioc_sample_entity', drop_existing=False)</span></span></span></p>
+
+<p dir="ltr"><span style="color:#0000ff;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;"># In[6] (verify the table and sample data was persisted):</span></span></span></p>
+
+<p dir="ltr"><span style="color:#008000;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;">df = db.read_table(entity.name,schema=db_schema)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+#df.head(1).transpose()<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+df.head(10)</span></span></span></p>
+
+<p dir="ltr"><span style="color:#0000ff;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;"># In[7] (create a sample function):</span></span></span></p>
+
+<p dir="ltr"><span style="color:#008000;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;">def column_sum(df,parameters):<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; '''<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; Columnwise sum of multiple input columns. No custom parameters required.<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; '''<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; rf = df.copy()<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; rf[parameters['output_item']] = df[parameters['input_items']].sum(axis=1)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp; return rf</span></span></span></p>
+
+<p dir="ltr"><span style="color:#0000ff;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;"># In[8] (save to Cloud Object Storage, then execute against the sample entity):</span></span></span></p>
+
+<p dir="ltr"><span style="color:#008000;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;">colsum = IoTCosFunction(function_name = column_sum,<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ input_items = ['temp','grade'] ,<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ output_item = 'column_sum')<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+df = entity.exec_pipeline(colsum, register=True)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+#df.head(1).transpose()<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+df.head(10)</span></span></span></p>
+
+<p dir="ltr"><span style="color:#0000ff;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;"># In[9] (test the FullAlertCategory function locally before registering):</span></span></span></p>
+
+<p dir="ltr"><span style="color:#008000;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;">from FullAlertCategory.FullAlertCategory import FullAlertCategory</span></span></span></p>
+
+<p dir="ltr"><span style="color:#0000ff;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;"># In[10] (read data from existing table):</span></span></span></p>
+
+<p dir="ltr"><span style="color:#008000;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;">df = db.read_table('IOT_CAPALERTSENDER_V4',schema=db_schema)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+#df.head(1).transpose()<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+df.head(10)</span></span></span></p>
+
+<p dir="ltr"><span style="color:#0000ff;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;"># In[11] (execute the function on the dataframe):</span></span></span></p>
+
+<p dir="ltr"><span style="color:#008000;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;">rdf = fullAlertCategory.execute(df)<br sandbox="allow-forms allow-same-origin allow-scripts allow-popups">
+rdf.head(10)</span></span></span></p>
+
+<p dir="ltr"><span style="color:#0000ff;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;"># In[12] (if all looks good register the function in Watson):</span></span></span></p>
+
+<p dir="ltr"><span style="color:#008000;"><span style="font-size:10px;"><span style="font-family:Courier New,Courier,monospace;">fullAlertCategory.register(df,credentials=credentials)</span></span></span></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">Some snapshots from Jupyter notebook:</p>
+
+<p dir="ltr"><img id="1548933451934_0" src="Registering%20Sample%20WIoT%20Analytic%20Function_files/editor_image_e3647a66-c46f-4b1a-8c26-84390938dc1a.png" width="715" height="385"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><img id="1548933526735_0" src="Registering%20Sample%20WIoT%20Analytic%20Function_files/editor_image_5e8c7119-fcfe-4e65-8c36-4152b544eff5.png" width="715" height="290"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><img id="1548933580967_0" src="Registering%20Sample%20WIoT%20Analytic%20Function_files/editor_image_5b865547-920d-4229-8acf-d0a33c4751b2.png" width="714" height="233"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><img id="1548933663246_0" src="Registering%20Sample%20WIoT%20Analytic%20Function_files/editor_image_b7d2a5c8-6b56-4256-88ff-c9e60f73682f.png" width="720" height="222"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><img id="1548933721369_0" src="Registering%20Sample%20WIoT%20Analytic%20Function_files/editor_image_4290f72e-b085-4178-894b-09958b1500f7.png" width="711" height="179"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<h2 dir="ltr">Step 3: Verify that function is available for use in Watson Dashboard</h2>
+
+<p dir="ltr"><img id="1548934091597_0" src="Registering%20Sample%20WIoT%20Analytic%20Function_files/editor_image_a1703e86-bdb1-497e-8908-d09be83b2c70.png" width="389" height="204">&nbsp; <img id="1548934122646_0" src="Registering%20Sample%20WIoT%20Analytic%20Function_files/editor_image_77106972-2c31-4863-826c-1f8e013247f6.png" width="485" height="338"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><img id="1548934174319_0" src="Registering%20Sample%20WIoT%20Analytic%20Function_files/editor_image_ca9f3dd9-1b9c-495f-8597-7d890b43c6b5.png" width="267" height="239"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">Some recent data generated from the function:</p>
+
+<p dir="ltr"><img id="1548934214060_0" src="Registering%20Sample%20WIoT%20Analytic%20Function_files/editor_image_16c95e15-5ed0-4966-8fc3-4001b02774b0.png" width="881" height="380"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">Watson stores the derived metrics in a table 'DM_DEVICETYPENAME':</p>
+
+<p dir="ltr"><img id="1548934797421_0" src="Registering%20Sample%20WIoT%20Analytic%20Function_files/editor_image_702068c6-d1a8-4286-8cfe-13b8518de8fd.png" width="884" height="393"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr"><img id="1548934830193_0" src="Registering%20Sample%20WIoT%20Analytic%20Function_files/editor_image_74ffd9de-ae1d-4769-874f-74223049c8d6.png" width="934" height="179"></p>
+
+<p dir="ltr">&nbsp;</p>
+
+<p dir="ltr">&nbsp;</p></div></body></html>
